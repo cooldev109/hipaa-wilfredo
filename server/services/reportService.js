@@ -1,0 +1,247 @@
+const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+const reportModel = require('../models/reportModel');
+const evaluationModel = require('../models/evaluationModel');
+const patientModel = require('../models/patientModel');
+const patientHistoryModel = require('../models/patientHistoryModel');
+const userModel = require('../models/userModel');
+const auditLogModel = require('../models/auditLogModel');
+const { assembleReport, getDefaultConditionBlocks } = require('./reportTemplateService');
+const { generatePdf } = require('../utils/pdfGenerator');
+const { AUDIT_ACTIONS } = require('../utils/constants');
+const env = require('../config/environment');
+const logger = require('../utils/logger');
+
+async function generateReport(evaluationId, conditionBlocks, userId, ipAddress, userAgent) {
+  const evaluation = await evaluationModel.findById(evaluationId);
+  if (!evaluation) throw { status: 404, errorCode: 'EVALUATION_NOT_FOUND' };
+
+  const patient = await patientModel.findById(evaluation.patientId);
+  if (!patient) throw { status: 404, errorCode: 'PATIENT_NOT_FOUND' };
+
+  const history = await patientHistoryModel.findByPatientId(evaluation.patientId);
+  const doctor = await userModel.findById(userId);
+
+  // Parse JSON fields in evaluation
+  const jsonFields = ['diagnoses', 'recommendations', 'retinoscopyOd', 'retinoscopyOs',
+    'subjectiveRefractionOd', 'subjectiveRefractionOs', 'finalRxOd', 'finalRxOs',
+    'vergenceDistanceBi', 'vergenceDistanceBo', 'vergenceNearBi', 'vergenceNearBo'];
+  for (const field of jsonFields) {
+    if (evaluation[field] && typeof evaluation[field] === 'string') {
+      try { evaluation[field] = JSON.parse(evaluation[field]); } catch { /* keep */ }
+    }
+  }
+
+  const blocks = conditionBlocks || getDefaultConditionBlocks(evaluation);
+  const version = await reportModel.getNextVersion(evaluationId);
+
+  // Assemble HTML
+  const htmlBody = assembleReport({
+    patient,
+    evaluation,
+    history,
+    conditionBlocks: blocks,
+    doctorName: `Dr. ${doctor.first_name} ${doctor.last_name}`,
+    licenseNumber: doctor.license_number || '—'
+  });
+
+  // Generate PDF
+  const pdfBuffer = await generatePdf(htmlBody);
+
+  // Save PDF to disk
+  const storageDir = env.storagePath;
+  if (!fs.existsSync(storageDir)) {
+    fs.mkdirSync(storageDir, { recursive: true });
+  }
+
+  const dateStr = new Date(evaluation.evaluationDate).toISOString().split('T')[0];
+  const fileName = `report_${patient.id}_${dateStr}_v${version}.pdf`;
+  const filePath = path.join(storageDir, fileName);
+  fs.writeFileSync(filePath, pdfBuffer);
+
+  const fileHash = crypto.createHash('sha256').update(pdfBuffer).digest('hex');
+
+  // Create report record
+  const report = await reportModel.create({
+    evaluationId,
+    patientId: patient.id,
+    version,
+    reportData: { patient: { firstName: patient.firstName, lastName: patient.lastName }, evaluationDate: evaluation.evaluationDate },
+    conditionBlocks: blocks,
+    createdBy: userId
+  });
+
+  await reportModel.updatePdfPath(report.id, filePath, fileHash);
+
+  await auditLogModel.create({
+    userId,
+    action: AUDIT_ACTIONS.REPORT_GENERATE,
+    resource: 'reports',
+    resourceId: report.id,
+    ipAddress,
+    userAgent
+  });
+
+  return { ...report, pdfFilePath: filePath, pdfFileHash: fileHash, version };
+}
+
+async function getReport(id, userId, ipAddress, userAgent) {
+  const report = await reportModel.findById(id);
+  if (!report) throw { status: 404, errorCode: 'REPORT_NOT_FOUND' };
+
+  await auditLogModel.create({
+    userId,
+    action: AUDIT_ACTIONS.REPORT_VIEW,
+    resource: 'reports',
+    resourceId: id,
+    ipAddress,
+    userAgent
+  });
+
+  return report;
+}
+
+async function downloadReport(id, userId, ipAddress, userAgent) {
+  const report = await reportModel.findById(id);
+  if (!report) throw { status: 404, errorCode: 'REPORT_NOT_FOUND' };
+  if (!report.pdfFilePath || !fs.existsSync(report.pdfFilePath)) {
+    throw { status: 404, errorCode: 'PDF_NOT_FOUND' };
+  }
+
+  await auditLogModel.create({
+    userId,
+    action: AUDIT_ACTIONS.REPORT_DOWNLOAD,
+    resource: 'reports',
+    resourceId: id,
+    ipAddress,
+    userAgent
+  });
+
+  return { filePath: report.pdfFilePath, report };
+}
+
+async function listReports(filters) {
+  const result = await reportModel.findAll(filters);
+  const { decrypt } = require('../utils/encryption');
+
+  result.reports = result.reports.map((r) => {
+    if (r.firstNameEncrypted) {
+      r.patientFirstName = decrypt(r.firstNameEncrypted);
+      r.patientLastName = decrypt(r.lastNameEncrypted);
+      delete r.firstNameEncrypted;
+      delete r.lastNameEncrypted;
+    }
+    return r;
+  });
+
+  return result;
+}
+
+async function listByEvaluation(evaluationId) {
+  return reportModel.findByEvaluationId(evaluationId);
+}
+
+async function signDoctorReport(id, signatureData, userId, ipAddress, userAgent) {
+  const report = await reportModel.findById(id);
+  if (!report) throw { status: 404, errorCode: 'REPORT_NOT_FOUND' };
+
+  const updated = await reportModel.signDoctor(id, signatureData, userId);
+
+  // Regenerate PDF with signature
+  if (report.pdfFilePath && fs.existsSync(report.pdfFilePath)) {
+    try {
+      const evaluation = await evaluationModel.findById(report.evaluationId);
+      const patient = await patientModel.findById(report.patientId);
+      const history = await patientHistoryModel.findByPatientId(report.patientId);
+      const doctor = await userModel.findById(userId);
+
+      const jsonFields = ['diagnoses', 'recommendations'];
+      for (const field of jsonFields) {
+        if (evaluation[field] && typeof evaluation[field] === 'string') {
+          try { evaluation[field] = JSON.parse(evaluation[field]); } catch { /* keep */ }
+        }
+      }
+
+      const blocks = report.conditionBlocks;
+      const htmlBody = assembleReport({
+        patient, evaluation, history,
+        conditionBlocks: typeof blocks === 'string' ? JSON.parse(blocks) : blocks,
+        doctorName: `Dr. ${doctor.first_name} ${doctor.last_name}`,
+        licenseNumber: doctor.license_number || '—'
+      });
+
+      const pdfBuffer = await generatePdf(htmlBody, signatureData, report.parentSignatureData);
+      fs.writeFileSync(report.pdfFilePath, pdfBuffer);
+      const fileHash = crypto.createHash('sha256').update(pdfBuffer).digest('hex');
+      await reportModel.updatePdfPath(id, report.pdfFilePath, fileHash);
+    } catch (err) {
+      logger.error({ err }, 'Failed to regenerate PDF with doctor signature');
+    }
+  }
+
+  await auditLogModel.create({
+    userId,
+    action: AUDIT_ACTIONS.REPORT_SIGN,
+    resource: 'reports',
+    resourceId: id,
+    ipAddress,
+    userAgent,
+    details: { signer: 'doctor' }
+  });
+
+  return updated;
+}
+
+async function signParentReport(id, signatureData, signerName, userId, ipAddress, userAgent) {
+  const report = await reportModel.findById(id);
+  if (!report) throw { status: 404, errorCode: 'REPORT_NOT_FOUND' };
+
+  const updated = await reportModel.signParent(id, signatureData, signerName);
+
+  // Regenerate PDF with parent signature
+  if (report.pdfFilePath && fs.existsSync(report.pdfFilePath)) {
+    try {
+      const evaluation = await evaluationModel.findById(report.evaluationId);
+      const patient = await patientModel.findById(report.patientId);
+      const history = await patientHistoryModel.findByPatientId(report.patientId);
+      const doctor = await userModel.findById(report.createdBy);
+
+      const jsonFields = ['diagnoses', 'recommendations'];
+      for (const field of jsonFields) {
+        if (evaluation[field] && typeof evaluation[field] === 'string') {
+          try { evaluation[field] = JSON.parse(evaluation[field]); } catch { /* keep */ }
+        }
+      }
+
+      const blocks = report.conditionBlocks;
+      const htmlBody = assembleReport({
+        patient, evaluation, history,
+        conditionBlocks: typeof blocks === 'string' ? JSON.parse(blocks) : blocks,
+        doctorName: `Dr. ${doctor.first_name} ${doctor.last_name}`,
+        licenseNumber: doctor.license_number || '—'
+      });
+
+      const pdfBuffer = await generatePdf(htmlBody, report.doctorSignatureData || signatureData, signatureData);
+      fs.writeFileSync(report.pdfFilePath, pdfBuffer);
+      const fileHash = crypto.createHash('sha256').update(pdfBuffer).digest('hex');
+      await reportModel.updatePdfPath(id, report.pdfFilePath, fileHash);
+    } catch (err) {
+      logger.error({ err }, 'Failed to regenerate PDF with parent signature');
+    }
+  }
+
+  await auditLogModel.create({
+    userId,
+    action: AUDIT_ACTIONS.REPORT_SIGN,
+    resource: 'reports',
+    resourceId: id,
+    ipAddress,
+    userAgent,
+    details: { signer: 'parent', signerName }
+  });
+
+  return updated;
+}
+
+module.exports = { generateReport, getReport, downloadReport, listReports, listByEvaluation, signDoctorReport, signParentReport };

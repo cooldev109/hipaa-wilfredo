@@ -149,6 +149,18 @@ hipaa-evf/
 - Code (variable names, comments, commit messages) in English.
 - Database column names in English.
 
+## Testing Protocol
+
+After completing each phase (or major step within a phase):
+
+1. **Self-test first:** Run and verify all functionality built in that step — start servers, hit endpoints, test UI flows, check database records, confirm audit logs, and validate edge cases. Fix any issues found before presenting to the user.
+2. **Provide test instructions:** Give the user clear, step-by-step instructions to test the feature themselves, including:
+   - How to start/run the system
+   - Exact actions to perform (click X, fill Y, submit Z)
+   - What to expect (expected results, where to look)
+   - What to report if something fails
+3. **Wait for user confirmation:** Do not proceed to the next phase until the user has tested and approved the current step.
+
 ## What NOT to Do
 
 - Never store PHI in logs. Sanitize patient names, DOB, and other PII before logging.
