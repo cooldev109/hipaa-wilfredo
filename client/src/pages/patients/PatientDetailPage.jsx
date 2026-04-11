@@ -5,6 +5,8 @@ import { useLanguage } from '../../hooks/useLanguage';
 import { getPatientApi, deletePatientApi } from '../../services/patientService';
 import { listPatientEvaluationsApi, createEvaluationApi } from '../../services/evaluationService';
 import { ArrowLeft, Edit, Trash2, FilePlus, Calendar, User, School, Phone, Mail, Eye, Plus } from 'lucide-react';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
+import { useToast } from '../../components/common/Toast';
 import dayjs from 'dayjs';
 
 const THERAPY_LABELS = {
@@ -22,8 +24,10 @@ export default function PatientDetailPage() {
   const { role } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const toast = useToast();
   const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useEffect(() => {
     loadPatient();
@@ -41,13 +45,14 @@ export default function PatientDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm(t('patients.confirmDelete'))) return;
     try {
       await deletePatientApi(id);
+      toast.success(t('success.deleted'));
       navigate('/pacientes');
     } catch {
-      alert(t('error.server'));
+      toast.error(t('error.server'));
     }
+    setShowDeleteConfirm(false);
   };
 
   if (loading) {
@@ -80,7 +85,7 @@ export default function PatientDetailPage() {
             <FilePlus size={15} /> {t('evaluations.new')}
           </button>
           {role === 'doctor' && (
-            <button onClick={handleDelete} style={dangerBtnStyle}>
+            <button onClick={() => setShowDeleteConfirm(true)} style={dangerBtnStyle}>
               <Trash2 size={15} /> {t('common.delete')}
             </button>
           )}
@@ -149,6 +154,18 @@ export default function PatientDetailPage() {
       <Card title={t('patients.evaluations')} style={{ marginTop: 'var(--space-lg)' }}>
         <EvaluationsList patientId={id} navigate={navigate} t={t} role={role} />
       </Card>
+
+      {showDeleteConfirm && (
+        <ConfirmDialog
+          title={t('patients.confirmDelete')}
+          message={`${patient.firstName} ${patient.lastName} — ${t('patients.deleteWarning') || 'This action cannot be undone.'}`}
+          confirmLabel={t('common.delete')}
+          cancelLabel={t('common.cancel')}
+          onConfirm={handleDelete}
+          onCancel={() => setShowDeleteConfirm(false)}
+          danger
+        />
+      )}
     </div>
   );
 }

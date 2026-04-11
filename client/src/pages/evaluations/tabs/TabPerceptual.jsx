@@ -1,111 +1,125 @@
-import ScoredTestTable from '../../../components/forms/ScoredTestTable';
-
-const sectionStyle = {
-  marginBottom: 'var(--space-lg)',
-  padding: 'var(--space-md)',
-  border: '1px solid var(--color-border)',
-  borderRadius: 'var(--radius-md)'
-};
-
-const garnerHeaderStyle = {
-  display: 'grid',
-  gridTemplateColumns: '140px 1fr 1fr 1fr',
-  gap: 'var(--space-sm)',
-  padding: 'var(--space-sm) var(--space-md)',
-  backgroundColor: 'var(--color-surface-alt)',
-  borderBottom: '1px solid var(--color-border)',
-  fontWeight: 600,
-  fontSize: 'var(--text-sm)'
-};
-
-const garnerRowStyle = {
-  display: 'grid',
-  gridTemplateColumns: '140px 1fr 1fr 1fr',
-  gap: 'var(--space-sm)',
-  padding: 'var(--space-sm) var(--space-md)',
-  borderBottom: '1px solid var(--color-border)',
-  alignItems: 'center'
-};
-
 const GARNER_ROWS = [
-  { key: 'garnerUnknown', label: 'eval.unknown' },
-  { key: 'garnerReversed', label: 'eval.reversed' },
-  { key: 'garnerRecognition', label: 'eval.recognition' }
+  { key: 'garnerUnknown', label: 'Unknown Letters/Numbers' },
+  { key: 'garnerReversed', label: 'Reversed Letters/Nums' },
+  { key: 'garnerRecognition', label: 'Recognition' },
 ];
 
-export default function TabPerceptual({ data, onChange, t }) {
+const BEERY_COLS = [
+  { key: 'RawScore', label: 'Raw Score' },
+  { key: 'ChronologicalAge', label: 'Chron. Age' },
+  { key: 'PerceptualAge', label: 'Percep. Age' },
+  { key: 'StandardScore', label: 'Std Score' },
+  { key: 'Percentile', label: 'Percentile' },
+];
+
+function BeeryTable({ title, prefix, data, onChange }) {
+  return (
+    <div style={sectionStyle}>
+      <h3 style={h3Style}>{title}</h3>
+      <table style={tableStyle}>
+        <thead>
+          <tr>
+            {BEERY_COLS.map((col) => (
+              <th key={col.key} style={thStyle}>{col.label}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            {BEERY_COLS.map((col) => (
+              <td key={col.key} style={tdStyle}>
+                <input
+                  type="text"
+                  value={data[`${prefix}${col.key}`] || ''}
+                  onChange={(e) => onChange(`${prefix}${col.key}`, e.target.value)}
+                  style={cellInput}
+                />
+              </td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export default function TabPerceptual({ data, onChange }) {
   return (
     <div>
       {/* Garner Reversal Test */}
       <div style={sectionStyle}>
-        <h3 style={{ marginBottom: 'var(--space-md)' }}>{t('eval.garnerReversalTest')}</h3>
-        <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-          <div style={garnerHeaderStyle}>
-            <span />
-            <span>{t('eval.errors')}</span>
-            <span>{t('eval.mean')}</span>
-            <span>{t('eval.sd')}</span>
-          </div>
-          {GARNER_ROWS.map((row) => (
-            <div key={row.key} style={garnerRowStyle}>
-              <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>{t(row.label)}</span>
-              <input
-                type="number"
-                value={data[`${row.key}Errors`] || ''}
-                onChange={(e) => onChange(`${row.key}Errors`, e.target.value)}
-              />
-              <input
-                type="number"
-                step="0.01"
-                value={data[`${row.key}Mean`] || ''}
-                onChange={(e) => onChange(`${row.key}Mean`, e.target.value)}
-              />
-              <input
-                type="number"
-                step="0.01"
-                value={data[`${row.key}Sd`] || ''}
-                onChange={(e) => onChange(`${row.key}Sd`, e.target.value)}
-              />
-            </div>
-          ))}
-        </div>
+        <h3 style={h3Style}>GARNER REVERSAL TEST</h3>
+        <table style={tableStyle}>
+          <thead>
+            <tr>
+              <th style={{ ...thStyle, textAlign: 'left', width: 200 }} />
+              <th style={thStyle}># Errors</th>
+              <th style={thStyle}>Mean</th>
+              <th style={thStyle}>SD</th>
+            </tr>
+          </thead>
+          <tbody>
+            {GARNER_ROWS.map((row) => (
+              <tr key={row.key}>
+                <td style={tdLabelStyle}>{row.label}</td>
+                <td style={tdStyle}>
+                  <input
+                    type="number"
+                    value={data[`${row.key}Errors`] || ''}
+                    onChange={(e) => onChange(`${row.key}Errors`, e.target.value)}
+                    style={cellInput}
+                  />
+                </td>
+                <td style={tdStyle}>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={data[`${row.key}Mean`] || ''}
+                    onChange={(e) => onChange(`${row.key}Mean`, e.target.value)}
+                    style={cellInput}
+                  />
+                </td>
+                <td style={tdStyle}>
+                  {row.key !== 'garnerRecognition' ? (
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={data[`${row.key}Sd`] || ''}
+                      onChange={(e) => onChange(`${row.key}Sd`, e.target.value)}
+                      style={cellInput}
+                    />
+                  ) : null}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* Beery VMI */}
-      <div style={sectionStyle}>
-        <h3 style={{ marginBottom: 'var(--space-md)' }}>{t('eval.beeryVmi')}</h3>
-        <ScoredTestTable
-          title={t('eval.beeryVmi')}
-          rawScore={data.beeryVmiRawScore}
-          chronologicalAge={data.beeryVmiChronologicalAge}
-          perceptualAge={data.beeryVmiPerceptualAge}
-          standardScore={data.beeryVmiStandardScore}
-          percentile={data.beeryVmiPercentile}
-          onRawScoreChange={(v) => onChange('beeryVmiRawScore', v)}
-          onChronologicalAgeChange={(v) => onChange('beeryVmiChronologicalAge', v)}
-          onPerceptualAgeChange={(v) => onChange('beeryVmiPerceptualAge', v)}
-          onStandardScoreChange={(v) => onChange('beeryVmiStandardScore', v)}
-          onPercentileChange={(v) => onChange('beeryVmiPercentile', v)}
-        />
-      </div>
+      <BeeryTable
+        title="VISUAL-MOTOR INTEGRATION (Beery VMI)"
+        prefix="beeryVmi"
+        data={data}
+        onChange={onChange}
+      />
 
       {/* Visual Perception */}
-      <div style={sectionStyle}>
-        <h3 style={{ marginBottom: 'var(--space-md)' }}>{t('eval.visualPerception')}</h3>
-        <ScoredTestTable
-          title={t('eval.visualPerception')}
-          rawScore={data.visualPerceptionRawScore}
-          chronologicalAge={data.visualPerceptionChronologicalAge}
-          perceptualAge={data.visualPerceptionPerceptualAge}
-          standardScore={data.visualPerceptionStandardScore}
-          percentile={data.visualPerceptionPercentile}
-          onRawScoreChange={(v) => onChange('visualPerceptionRawScore', v)}
-          onChronologicalAgeChange={(v) => onChange('visualPerceptionChronologicalAge', v)}
-          onPerceptualAgeChange={(v) => onChange('visualPerceptionPerceptualAge', v)}
-          onStandardScoreChange={(v) => onChange('visualPerceptionStandardScore', v)}
-          onPercentileChange={(v) => onChange('visualPerceptionPercentile', v)}
-        />
-      </div>
+      <BeeryTable
+        title="VISUAL PERCEPTION (Beery VP)"
+        prefix="visualPerception"
+        data={data}
+        onChange={onChange}
+      />
     </div>
   );
 }
+
+const sectionStyle = { border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: 16, marginBottom: 16 };
+const h3Style = { fontSize: 'var(--text-sm)', fontWeight: 700, color: 'var(--color-primary)', letterSpacing: '0.5px', textTransform: 'uppercase', margin: 0, marginBottom: 8 };
+const tableStyle = { width: '100%', borderCollapse: 'collapse' };
+const thStyle = { padding: '6px 12px', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', textAlign: 'center', borderBottom: '2px solid var(--color-primary)' };
+const tdStyle = { padding: '4px 8px', borderBottom: '1px solid var(--color-border)', textAlign: 'center' };
+const tdLabelStyle = { ...tdStyle, textAlign: 'left', fontWeight: 600, fontSize: 'var(--text-sm)', color: 'var(--color-text)', width: '120px' };
+const cellInput = { textAlign: 'center', padding: '4px 8px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', width: '80px', fontSize: 'var(--text-base)' };
+const labelStyle = { fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: 4, display: 'block' };

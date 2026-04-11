@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '../../hooks/useLanguage';
 import { listEvaluationsApi, createEvaluationApi } from '../../services/evaluationService';
+import PatientPicker from '../../components/forms/PatientPicker';
 import { Plus, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import dayjs from 'dayjs';
 
@@ -78,8 +79,8 @@ export default function EvaluationListPage() {
           {error && <div style={{ padding: 'var(--space-sm)', backgroundColor: 'var(--color-error-bg)', color: 'var(--color-error)', borderRadius: 'var(--radius-sm)', marginBottom: 'var(--space-md)', fontSize: 'var(--text-sm)' }}>{error}</div>}
           <form onSubmit={handleCreate} style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'flex-end' }}>
             <div style={{ flex: 1 }}>
-              <label>{t('evaluations.patientId')}</label>
-              <input value={createForm.patientId} onChange={(e) => setCreateForm({ ...createForm, patientId: e.target.value })} placeholder="Patient UUID" required />
+              <label>{t('evaluations.patient')}</label>
+              <PatientPicker value={createForm.patientId} onChange={(id) => setCreateForm({ ...createForm, patientId: id })} />
             </div>
             <div style={{ width: '200px' }}>
               <label>{t('evaluations.date')}</label>

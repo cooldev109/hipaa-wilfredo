@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../hooks/useLanguage';
 import { listReportsApi, generateReportApi } from '../../services/reportService';
+import EvaluationPicker from '../../components/forms/EvaluationPicker';
 import { Plus, Eye, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import dayjs from 'dayjs';
 
@@ -77,7 +78,7 @@ export default function ReportListPage() {
           <form onSubmit={handleGenerate} style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'flex-end' }}>
             <div style={{ flex: 1 }}>
               <label>{t('reports.evaluationId')}</label>
-              <input value={evalId} onChange={(e) => setEvalId(e.target.value)} placeholder="Evaluation UUID" required />
+              <EvaluationPicker value={evalId} onChange={(id) => setEvalId(id)} placeholder="Select a completed evaluation..." />
             </div>
             <button type="submit" disabled={generating} style={primaryBtnStyle}>
               {generating ? t('common.loading') : t('reports.generate')}

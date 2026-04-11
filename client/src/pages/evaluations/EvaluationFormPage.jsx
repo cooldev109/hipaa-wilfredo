@@ -4,6 +4,7 @@ import { useLanguage } from '../../hooks/useLanguage';
 import { useAutoSave } from '../../hooks/useAutoSave';
 import { getEvaluationApi, autoSaveEvaluationApi, updateEvaluationApi, changeEvaluationStatusApi } from '../../services/evaluationService';
 import { ArrowLeft, Save, CheckCircle, Clock } from 'lucide-react';
+import logo from '../../assets/logo.png';
 import TabVisualAcuity from './tabs/TabVisualAcuity';
 import TabOculomotor from './tabs/TabOculomotor';
 import TabRefraction from './tabs/TabRefraction';
@@ -14,13 +15,13 @@ import TabAssessment from './tabs/TabAssessment';
 import dayjs from 'dayjs';
 
 const TABS = [
-  { key: 'visualAcuity', labelKey: 'eval.tab.visualAcuity' },
-  { key: 'oculomotor', labelKey: 'eval.tab.oculomotor' },
-  { key: 'refraction', labelKey: 'eval.tab.refraction' },
-  { key: 'binocular', labelKey: 'eval.tab.binocular' },
-  { key: 'ocularHealth', labelKey: 'eval.tab.ocularHealth' },
-  { key: 'perceptual', labelKey: 'eval.tab.perceptual' },
-  { key: 'assessment', labelKey: 'eval.tab.assessment' }
+  { key: 'visualAcuity', label: 'VA & Basic Tests' },
+  { key: 'oculomotor', label: 'RightEye' },
+  { key: 'refraction', label: 'Refraction' },
+  { key: 'binocular', label: 'Binocular' },
+  { key: 'ocularHealth', label: 'Ocular Health' },
+  { key: 'perceptual', label: 'Perceptual' },
+  { key: 'assessment', label: 'Assessment & Plan' }
 ];
 
 export default function EvaluationFormPage() {
@@ -109,23 +110,69 @@ export default function EvaluationFormPage() {
 
   return (
     <div>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-lg)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
-          <button onClick={() => navigate('/evaluaciones')} style={backBtnStyle}>
-            <ArrowLeft size={16} />
-          </button>
-          <div>
-            <h1>{t('eval.title')}</h1>
-            <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)' }}>
-              {evaluation.patientFirstName} {evaluation.patientLastName} — {dayjs(evaluation.evaluationDate).format('DD/MM/YYYY')}
-            </p>
+      {/* Back button */}
+      <div style={{ marginBottom: 'var(--space-md)' }}>
+        <button onClick={() => navigate('/evaluaciones')} style={backBtnStyle}>
+          <ArrowLeft size={16} />
+          <span style={{ fontSize: 'var(--text-sm)' }}>Back to Evaluations</span>
+        </button>
+      </div>
+
+      {/* ===== CLINIC HEADER (matching PDF) ===== */}
+      <div style={{
+        backgroundColor: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+        borderRadius: 'var(--radius-md)',
+        padding: 'var(--space-lg)',
+        marginBottom: 'var(--space-md)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid var(--color-primary)', paddingBottom: 12, marginBottom: 16 }}>
+          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', lineHeight: 1.6 }}>
+            Aquamarina 10<br />
+            Urb. Villa Blanca<br />
+            Caguas PR 00725
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <img src={logo} alt="Neuronita" style={{ width: '70px', height: 'auto', marginBottom: 4 }} />
+            <p style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>Neuro-Cognitive Rehabilitation Clinic</p>
+          </div>
+          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', textAlign: 'right', lineHeight: 1.6 }}>
+            Tel. 787-407-4814<br />
+            Fax. 787-258-8225<br />
+            clinicarehabilitacion10@gmail.com
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-          {/* Status badge */}
+
+        <h2 style={{ textAlign: 'center', fontSize: 'var(--text-lg)', fontWeight: 700, color: 'var(--color-primary)', letterSpacing: '1px', textTransform: 'uppercase', margin: '0 0 16px' }}>
+          FUNCTIONAL VISION EVALUATION
+        </h2>
+
+        {/* Patient Info Bar */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, fontSize: 'var(--text-sm)' }}>
+          <div>
+            <span style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>DATE OF EVALUATION: </span>
+            <span>{dayjs(evaluation.evaluationDate).format('MM/DD/YYYY')}</span>
+          </div>
+          <div>
+            <span style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>NAME: </span>
+            <span style={{ fontWeight: 500 }}>{evaluation.patientFirstName} {evaluation.patientLastName}</span>
+          </div>
+          <div style={{ display: 'flex', gap: 16 }}>
+            <span>
+              <span style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>SEX: </span>
+              <span>{evaluation.sex === 'M' ? 'M' : 'F'}</span>
+            </span>
+            <span>
+              <span style={{ color: 'var(--color-text-secondary)', fontWeight: 600 }}>DOB: </span>
+              <span>{evaluation.patientDateOfBirth ? dayjs(evaluation.patientDateOfBirth).format('MM/DD/YYYY') : '—'}</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Status + Auto-save row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--color-border)' }}>
           <span style={{
-            padding: '4px 12px',
+            padding: '3px 12px',
             borderRadius: 'var(--radius-full)',
             fontSize: 'var(--text-xs)',
             fontWeight: 500,
@@ -135,18 +182,18 @@ export default function EvaluationFormPage() {
           }}>
             {t(`status.${evaluation.status}`)}
           </span>
-
-          {/* Auto-save indicator */}
-          {saving && (
-            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Clock size={12} /> {t('eval.saving')}
-            </span>
-          )}
-          {lastSaved && !saving && (
-            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <CheckCircle size={12} /> {t('eval.autoSaved')} {dayjs(lastSaved).format('HH:mm:ss')}
-            </span>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {saving && (
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Clock size={12} /> Saving...
+              </span>
+            )}
+            {lastSaved && !saving && (
+              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-success)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <CheckCircle size={12} /> Auto-saved {dayjs(lastSaved).format('HH:mm:ss')}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -191,7 +238,7 @@ export default function EvaluationFormPage() {
             }}
           >
             <span style={{ marginRight: '6px', fontSize: 'var(--text-xs)', opacity: 0.7 }}>{index + 1}</span>
-            {t(tab.labelKey)}
+            {tab.label}
           </button>
         ))}
       </div>
@@ -239,7 +286,7 @@ export default function EvaluationFormPage() {
   );
 }
 
-const backBtnStyle = { width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--color-text)' };
+const backBtnStyle = { display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--color-text)', fontSize: 'var(--text-sm)' };
 const primaryBtnStyle = { display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', padding: 'var(--space-sm) var(--space-lg)', backgroundColor: 'var(--color-primary)', color: 'var(--color-text-on-primary)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: 'var(--text-base)', fontWeight: 500 };
 const secondaryBtnStyle = { display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', padding: 'var(--space-sm) var(--space-lg)', backgroundColor: 'transparent', color: 'var(--color-text)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: 'var(--text-base)' };
 const accentBtnStyle = { display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', padding: 'var(--space-sm) var(--space-lg)', backgroundColor: 'var(--color-accent)', color: 'var(--color-text-on-primary)', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: 'var(--text-base)', fontWeight: 500 };

@@ -1,111 +1,83 @@
 import PrescriptionInput from '../../../components/forms/PrescriptionInput';
-import VisualAcuityInput from '../../../components/forms/VisualAcuityInput';
 
-const sectionStyle = {
-  marginBottom: 'var(--space-lg)',
-  padding: 'var(--space-md)',
-  border: '1px solid var(--color-border)',
-  borderRadius: 'var(--radius-md)'
-};
+export default function TabRefraction({ data, onChange }) {
+  const sections = [
+    { title: 'RETINOSCOPY', odKey: 'retinoscopyOd', osKey: 'retinoscopyOs', vaPrefix: 'retinoscopy' },
+    { title: 'SUBJECTIVE REFRACTION', odKey: 'subjectiveOd', osKey: 'subjectiveOs', vaPrefix: 'subjective' },
+    { title: 'FINAL PRESCRIPTION', odKey: 'finalRxOd', osKey: 'finalRxOs', vaPrefix: 'finalRx' },
+  ];
 
-const vaGridStyle = {
-  display: 'grid',
-  gridTemplateColumns: '60px 1fr 1fr 1fr',
-  gap: 'var(--space-sm)',
-  alignItems: 'end',
-  marginBottom: 'var(--space-sm)'
-};
-
-function PostRefractionVA({ label, prefix, data, onChange }) {
-  return (
-    <div style={{ marginBottom: 'var(--space-md)' }}>
-      <label style={{ fontSize: 'var(--text-sm)', fontWeight: 600, marginBottom: 'var(--space-sm)', display: 'block' }}>{label}</label>
-      {['Od', 'Os', 'Ou'].map((eye) => (
-        <div key={eye} style={vaGridStyle}>
-          <span style={{ fontWeight: 600, fontSize: 'var(--text-sm)', paddingBottom: '6px' }}>{eye.toUpperCase()}</span>
-          <VisualAcuityInput
-            label="Distance"
-            value={data[`${prefix}Va${eye}Distance`]}
-            onChange={(v) => onChange(`${prefix}Va${eye}Distance`, v)}
-          />
-          <VisualAcuityInput
-            label="Near"
-            value={data[`${prefix}Va${eye}Near`]}
-            onChange={(v) => onChange(`${prefix}Va${eye}Near`, v)}
-          />
-          <div />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-export default function TabRefraction({ data, onChange, t }) {
   return (
     <div>
-      {/* Retinoscopy */}
       <div style={sectionStyle}>
-        <h3 style={{ marginBottom: 'var(--space-md)' }}>{t('eval.retinoscopy')}</h3>
-        <PrescriptionInput
-          label="OD"
-          value={data.retinoscopyOd || {}}
-          onChange={(v) => onChange('retinoscopyOd', v)}
-        />
-        <PrescriptionInput
-          label="OS"
-          value={data.retinoscopyOs || {}}
-          onChange={(v) => onChange('retinoscopyOs', v)}
-        />
-      </div>
-
-      {/* Subjective Refraction */}
-      <div style={sectionStyle}>
-        <h3 style={{ marginBottom: 'var(--space-md)' }}>{t('eval.subjectiveRefraction')}</h3>
-        <PrescriptionInput
-          label="OD"
-          value={data.subjectiveOd || {}}
-          onChange={(v) => onChange('subjectiveOd', v)}
-        />
-        <PrescriptionInput
-          label="OS"
-          value={data.subjectiveOs || {}}
-          onChange={(v) => onChange('subjectiveOs', v)}
-        />
-      </div>
-
-      {/* Final Prescription */}
-      <div style={sectionStyle}>
-        <h3 style={{ marginBottom: 'var(--space-md)' }}>{t('eval.finalPrescription')}</h3>
-        <PrescriptionInput
-          label="OD"
-          value={data.finalRxOd || {}}
-          onChange={(v) => onChange('finalRxOd', v)}
-        />
-        <PrescriptionInput
-          label="OS"
-          value={data.finalRxOs || {}}
-          onChange={(v) => onChange('finalRxOs', v)}
-        />
-        <div style={{ marginTop: 'var(--space-sm)' }}>
-          <label style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>ADD</label>
-          <input
-            type="number"
-            step="0.25"
-            value={data.finalRxAdd || ''}
-            onChange={(e) => onChange('finalRxAdd', e.target.value)}
-            placeholder="+0.00"
-            style={{ maxWidth: '150px' }}
-          />
-        </div>
-      </div>
-
-      {/* Post-Refraction VA */}
-      <div style={sectionStyle}>
-        <h3 style={{ marginBottom: 'var(--space-md)' }}>{t('eval.postRefractionVa')}</h3>
-        <PostRefractionVA label={t('eval.retinoscopy')} prefix="retinoscopy" data={data} onChange={onChange} />
-        <PostRefractionVA label={t('eval.subjectiveRefraction')} prefix="subjective" data={data} onChange={onChange} />
-        <PostRefractionVA label={t('eval.finalPrescription')} prefix="finalRx" data={data} onChange={onChange} />
+        <table style={tableStyle}>
+          <thead>
+            <tr>
+              <th style={{ ...thStyle, textAlign: 'left', width: '50%' }}>REFRACTION</th>
+              <th style={{ ...thStyle, width: '50%' }}>VISUAL ACUITY</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sections.map((sec) => (
+              <tr key={sec.title} style={{ verticalAlign: 'top' }}>
+                <td style={{ ...tdStyle, textAlign: 'left', padding: '12px 8px' }}>
+                  <div style={{ fontWeight: 700, fontSize: 'var(--text-sm)', color: 'var(--color-primary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    {sec.title}
+                  </div>
+                  <PrescriptionInput
+                    label="OD"
+                    value={data[sec.odKey] || {}}
+                    onChange={(v) => onChange(sec.odKey, v)}
+                  />
+                  <PrescriptionInput
+                    label="OS"
+                    value={data[sec.osKey] || {}}
+                    onChange={(v) => onChange(sec.osKey, v)}
+                  />
+                </td>
+                <td style={{ ...tdStyle, padding: '12px 8px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', marginTop: 28 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <label style={labelStyle}>OD 20/</label>
+                      <input
+                        type="text"
+                        value={data[`${sec.vaPrefix}VaOd`] || ''}
+                        onChange={(e) => onChange(`${sec.vaPrefix}VaOd`, e.target.value)}
+                        style={cellInput}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', justifyContent: 'center' }}>
+                      <label style={labelStyle}>OS 20/</label>
+                      <input
+                        type="text"
+                        value={data[`${sec.vaPrefix}VaOs`] || ''}
+                        onChange={(e) => onChange(`${sec.vaPrefix}VaOs`, e.target.value)}
+                        style={cellInput}
+                      />
+                      <label style={{ ...labelStyle, marginLeft: 12 }}>OU 20/</label>
+                      <input
+                        type="text"
+                        value={data[`${sec.vaPrefix}VaOu`] || ''}
+                        onChange={(e) => onChange(`${sec.vaPrefix}VaOu`, e.target.value)}
+                        style={cellInput}
+                      />
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
 }
+
+const sectionStyle = { border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', padding: 16, marginBottom: 16 };
+const h3Style = { fontSize: 'var(--text-sm)', fontWeight: 700, color: 'var(--color-primary)', letterSpacing: '0.5px', textTransform: 'uppercase', margin: 0, marginBottom: 8 };
+const tableStyle = { width: '100%', borderCollapse: 'collapse' };
+const thStyle = { padding: '6px 12px', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', textAlign: 'center', borderBottom: '2px solid var(--color-primary)' };
+const tdStyle = { padding: '4px 8px', borderBottom: '1px solid var(--color-border)', textAlign: 'center' };
+const tdLabelStyle = { ...tdStyle, textAlign: 'left', fontWeight: 600, fontSize: 'var(--text-sm)', color: 'var(--color-text)', width: '120px' };
+const cellInput = { textAlign: 'center', padding: '4px 8px', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', width: '80px', fontSize: 'var(--text-base)' };
+const labelStyle = { fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--color-text-secondary)', marginBottom: 4, display: 'block' };

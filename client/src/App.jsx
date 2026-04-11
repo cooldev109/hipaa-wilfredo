@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './components/common/Toast';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import ForcePasswordChange from './components/layout/ForcePasswordChange';
 import AppLayout from './components/layout/AppLayout';
@@ -21,8 +22,9 @@ function App() {
   return (
     <ThemeProvider>
       <LanguageProvider>
-        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-          <AuthProvider>
+        <ToastProvider>
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <AuthProvider>
             <Routes>
               {/* Public */}
               <Route path="/login" element={<LoginPage />} />
@@ -96,8 +98,9 @@ function App() {
               {/* Catch-all */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-          </AuthProvider>
-        </BrowserRouter>
+            </AuthProvider>
+          </BrowserRouter>
+        </ToastProvider>
       </LanguageProvider>
     </ThemeProvider>
   );
