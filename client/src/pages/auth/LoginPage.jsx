@@ -48,22 +48,21 @@ export default function LoginPage() {
         <div style={{ position: 'absolute', bottom: '-60px', right: '-60px', width: '250px', height: '250px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)' }} />
         <div style={{ position: 'absolute', top: '40%', left: '10%', width: '120px', height: '120px', borderRadius: '50%', background: 'rgba(255,255,255,0.02)' }} />
 
-        <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: '400px' }}>
-          <div style={{
-            backgroundColor: 'rgba(255,255,255,0.95)',
-            borderRadius: 'var(--radius-lg)',
-            padding: 'var(--space-md)',
-            display: 'inline-block',
-            marginBottom: 'var(--space-xl)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.15)'
-          }}>
-            <img src={logo} alt="Neuronita" style={{ width: '100px', height: 'auto', display: 'block' }} />
-          </div>
+        <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: '560px' }}>
+          <img
+            src={logo}
+            alt="Neuronita"
+            style={{
+              width: '100%',
+              maxWidth: '480px',
+              height: 'auto',
+              display: 'block',
+              margin: '0 auto var(--space-lg)',
+              filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.3))'
+            }}
+          />
 
-          <h1 style={{ color: '#FFFFFF', fontSize: 'var(--text-3xl)', fontWeight: 700, marginBottom: 'var(--space-sm)', letterSpacing: '-0.5px' }}>
-            Neuronita
-          </h1>
-          <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 'var(--text-md)', lineHeight: 'var(--leading-relaxed)', marginBottom: 'var(--space-xl)' }}>
+          <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: 'var(--text-md)', lineHeight: 'var(--leading-relaxed)', marginBottom: 'var(--space-xl)' }}>
             {t('login.title')}
           </p>
 
@@ -95,7 +94,7 @@ export default function LoginPage() {
         <div className="login-form-inner">
           {/* Mobile logo (visible only on mobile) */}
           <div className="login-mobile-header">
-            <img src={logo} alt="Neuronita" style={{ width: '90px', height: 'auto', marginBottom: 'var(--space-sm)' }} />
+            <img src={logo} alt="Neuronita" style={{ width: '220px', height: 'auto', marginBottom: 'var(--space-sm)' }} />
             <p style={{ color: 'var(--color-text-secondary)', fontSize: 'var(--text-sm)', textAlign: 'center' }}>
               {t('login.title')}
             </p>

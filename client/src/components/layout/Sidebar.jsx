@@ -37,19 +37,17 @@ export default function Sidebar() {
         padding: 'var(--space-lg) var(--space-lg) var(--space-md)',
         textAlign: 'center'
       }}>
-        <div style={{
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          borderRadius: 'var(--radius-md)',
-          padding: 'var(--space-sm)',
-          display: 'inline-block',
-          marginBottom: 'var(--space-sm)'
-        }}>
-          <img
-            src={logo}
-            alt="Neuronita"
-            style={{ width: '72px', height: 'auto', display: 'block' }}
-          />
-        </div>
+        <img
+          src={logo}
+          alt="Neuronita"
+          style={{
+            width: '140px',
+            height: 'auto',
+            display: 'block',
+            margin: '0 auto var(--space-sm)',
+            filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.3))'
+          }}
+        />
         <p style={{ fontSize: '11px', color: 'var(--color-sidebar-text-muted)', letterSpacing: '1px', textTransform: 'uppercase' }}>
           {t('sidebar.system')}
         </p>
