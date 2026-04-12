@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 const env = require('./config/environment');
 const routes = require('./routes');
 const errorHandler = require('./middleware/errorHandler');
@@ -9,8 +10,10 @@ const logger = require('./utils/logger');
 
 const app = express();
 
-// Security headers
-app.use(helmet());
+// Security headers (relaxed CSP for production serving React)
+app.use(helmet({
+  contentSecurityPolicy: env.nodeEnv === 'production' ? false : undefined
+}));
 
 // CORS
 app.use(cors({
@@ -51,10 +54,19 @@ app.get('/api/health', (req, res) => {
 // API routes
 app.use('/api', routes);
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ success: false, errorCode: 'ROUTE_NOT_FOUND' });
-});
+// Serve React frontend in production
+if (env.nodeEnv === 'production') {
+  const clientBuild = path.join(__dirname, '..', 'client', 'dist');
+  app.use(express.static(clientBuild));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(clientBuild, 'index.html'));
+  });
+} else {
+  // 404 handler (dev only — in prod, React handles routing)
+  app.use((req, res) => {
+    res.status(404).json({ success: false, errorCode: 'ROUTE_NOT_FOUND' });
+  });
+}
 
 // Centralized error handler
 app.use(errorHandler);
