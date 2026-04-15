@@ -2,7 +2,7 @@ import ClinicalSelect from '../../../components/forms/ClinicalSelect';
 import {
   EXT_LIDS_OPTIONS, EXT_CONJ_OPTIONS, EXT_CORNEA_OPTIONS, EXT_IRIS_OPTIONS,
   EXT_ANGLES_OPTIONS, EXT_PUPILS_OPTIONS,
-  INT_LENS_OPTIONS, INT_MEDIA_OPTIONS, INT_CD_OPTIONS, INT_AV_OPTIONS, INT_MACULA_OPTIONS
+  INT_LENS_OPTIONS, INT_MEDIA_OPTIONS, INT_AV_OPTIONS, INT_MACULA_OPTIONS
 } from '../../../utils/clinicalOptions';
 
 const EXTERNAL_FIELDS = [
@@ -15,7 +15,7 @@ const EXTERNAL_FIELDS = [
 const INTERNAL_FIELDS = [
   { key: 'lens', label: 'LENS', options: INT_LENS_OPTIONS },
   { key: 'media', label: 'MEDIA', options: INT_MEDIA_OPTIONS },
-  { key: 'cd', label: 'C/D', options: INT_CD_OPTIONS },
+  { key: 'cd', label: 'C/D', freeText: true },
   { key: 'av', label: 'A/V', options: INT_AV_OPTIONS },
   { key: 'maculaFr', label: 'MACULA/FR', options: INT_MACULA_OPTIONS },
 ];
@@ -41,6 +41,7 @@ NORMAL_VALUES.mediaOd = 'Clear';
 NORMAL_VALUES.mediaOs = 'Clear';
 NORMAL_VALUES.cdOd = '0.3';
 NORMAL_VALUES.cdOs = '0.3';
+// Note: C/D accepts any text (fractions like "2/3" or decimals like "0.3")
 NORMAL_VALUES.avOd = '2:3';
 NORMAL_VALUES.avOs = '2:3';
 NORMAL_VALUES.maculaFrOd = 'Flat, good reflex';
@@ -176,22 +177,42 @@ export default function TabOcularHealth({ data, onChange }) {
                   <tr key={f.key}>
                     <td style={tdLabelStyle}>{f.label}</td>
                     <td style={tdStyle}>
-                      <ClinicalSelect
-                        value={data[`${f.key}Od`] || ''}
-                        onChange={(v) => onChange(`${f.key}Od`, v)}
-                        options={f.options}
-                        placeholder="—"
-                        allowCustom
-                      />
+                      {f.freeText ? (
+                        <input
+                          type="text"
+                          value={data[`${f.key}Od`] || ''}
+                          onChange={(e) => onChange(`${f.key}Od`, e.target.value)}
+                          placeholder="e.g. 2/3"
+                          style={{ ...cellInput, width: '100%' }}
+                        />
+                      ) : (
+                        <ClinicalSelect
+                          value={data[`${f.key}Od`] || ''}
+                          onChange={(v) => onChange(`${f.key}Od`, v)}
+                          options={f.options}
+                          placeholder="—"
+                          allowCustom
+                        />
+                      )}
                     </td>
                     <td style={tdStyle}>
-                      <ClinicalSelect
-                        value={data[`${f.key}Os`] || ''}
-                        onChange={(v) => onChange(`${f.key}Os`, v)}
-                        options={f.options}
-                        placeholder="—"
-                        allowCustom
-                      />
+                      {f.freeText ? (
+                        <input
+                          type="text"
+                          value={data[`${f.key}Os`] || ''}
+                          onChange={(e) => onChange(`${f.key}Os`, e.target.value)}
+                          placeholder="e.g. 2/3"
+                          style={{ ...cellInput, width: '100%' }}
+                        />
+                      ) : (
+                        <ClinicalSelect
+                          value={data[`${f.key}Os`] || ''}
+                          onChange={(v) => onChange(`${f.key}Os`, v)}
+                          options={f.options}
+                          placeholder="—"
+                          allowCustom
+                        />
+                      )}
                     </td>
                   </tr>
                 ))}
