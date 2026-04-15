@@ -24,7 +24,7 @@ const EVALUATION_FIELDS = [
   'vergence_near_bi', 'vergence_near_bo', 'vergence_near_bu', 'vergence_near_bd',
   'ext_lids_lash_od', 'ext_lids_lash_os', 'ext_conj_od', 'ext_conj_os',
   'ext_cornea_od', 'ext_cornea_os', 'ext_iris_od', 'ext_iris_os',
-  'ext_angles_od', 'ext_angles_os', 'ext_pupils_od', 'ext_pupils_os',
+  'ext_angles_od', 'ext_angles_os', 'angles_od', 'angles_os', 'ext_pupils_od', 'ext_pupils_os',
   'int_lens_od', 'int_lens_os', 'int_media_od', 'int_media_os',
   'int_cd_od', 'int_cd_os', 'int_av_od', 'int_av_os',
   'int_macula_fr_od', 'int_macula_fr_os',

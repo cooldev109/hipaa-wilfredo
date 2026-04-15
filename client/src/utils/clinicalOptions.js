@@ -28,7 +28,18 @@ export const EXT_LIDS_OPTIONS = ['Healthy', 'WNL', 'Blepharitis', 'Chalazion', '
 export const EXT_CONJ_OPTIONS = ['Healthy', 'WNL', 'Clear', 'Papillae', 'Pinguecula', 'Pterygium', 'Injection', 'Chemosis', 'Follicles', 'Hemorrhage', 'D&Q'];
 export const EXT_CORNEA_OPTIONS = ['Clear', 'WNL', 'SPK', 'Abrasion', 'Infiltrate', 'Scar', 'Dystrophy', 'Edema', 'Neovascularization', 'Arcus', 'Dry'];
 export const EXT_IRIS_OPTIONS = ['Healthy', 'WNL', 'Flat', 'Normal', 'Nevus', 'Atrophy', 'Rubeosis', 'Synechiae'];
-export const EXT_ANGLES_OPTIONS = ['Open', 'Narrow', 'Closed', 'Grade I', 'Grade II', 'Grade III', 'Grade IV'];
+export const EXT_ANGLES_OPTIONS = [
+  'Open',
+  'Grade 1',
+  'Grade 1 x Grade 2',
+  'Grade 2',
+  'Grade 2 x Grade 3',
+  'Grade 3',
+  'Grade 3 x Grade 4',
+  'Grade 4',
+  'Narrow',
+  'Closed'
+];
 export const EXT_PUPILS_OPTIONS = ['PERRLA', 'Equal', 'Unequal', 'Sluggish', 'Fixed', 'APD OD', 'APD OS', 'Irregular'];
 
 // Ocular Health - Internal structures

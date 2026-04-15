@@ -20,8 +20,6 @@ const INTERNAL_FIELDS = [
   { key: 'maculaFr', label: 'MACULA/FR', options: INT_MACULA_OPTIONS },
 ];
 
-const ANGLE_LABELS = ['I', 'II', 'III', 'IV'];
-
 const NORMAL_VALUES = {};
 // External normal values
 NORMAL_VALUES.lidsLashOd = 'Healthy';
@@ -32,13 +30,10 @@ NORMAL_VALUES.corneaOd = 'Clear';
 NORMAL_VALUES.corneaOs = 'Clear';
 NORMAL_VALUES.irisOd = 'Healthy';
 NORMAL_VALUES.irisOs = 'Healthy';
+NORMAL_VALUES.anglesOd = 'Open';
+NORMAL_VALUES.anglesOs = 'Open';
 NORMAL_VALUES.pupilsOd = 'PERRLA';
 NORMAL_VALUES.pupilsOs = 'PERRLA';
-ANGLE_LABELS.forEach((_, i) => {
-  const key = ['I', 'Ii', 'Iii', 'Iv'][i];
-  NORMAL_VALUES[`angles${key}Od`] = 'Open';
-  NORMAL_VALUES[`angles${key}Os`] = 'Open';
-});
 // Internal normal values
 NORMAL_VALUES.lensOd = 'Clear';
 NORMAL_VALUES.lensOs = 'Clear';
@@ -120,39 +115,23 @@ export default function TabOcularHealth({ data, onChange }) {
                 {/* Angles row */}
                 <tr>
                   <td style={tdLabelStyle}>ANGLES</td>
-                  <td style={tdStyle} colSpan={2}>
-                    <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
-                      {ANGLE_LABELS.map((lbl, i) => {
-                        const key = ['I', 'Ii', 'Iii', 'Iv'][i];
-                        return (
-                          <div key={lbl} style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)', fontWeight: 600 }}>{lbl}</div>
-                            <div style={{ display: 'flex', gap: 4 }}>
-                              <div style={{ textAlign: 'center' }}>
-                                <div style={{ fontSize: 9, color: 'var(--color-text-secondary)' }}>OD</div>
-                                <ClinicalSelect
-                                  value={data[`angles${key}Od`] || ''}
-                                  onChange={(v) => onChange(`angles${key}Od`, v)}
-                                  options={EXT_ANGLES_OPTIONS}
-                                  placeholder="—"
-                                  allowCustom={false}
-                                />
-                              </div>
-                              <div style={{ textAlign: 'center' }}>
-                                <div style={{ fontSize: 9, color: 'var(--color-text-secondary)' }}>OS</div>
-                                <ClinicalSelect
-                                  value={data[`angles${key}Os`] || ''}
-                                  onChange={(v) => onChange(`angles${key}Os`, v)}
-                                  options={EXT_ANGLES_OPTIONS}
-                                  placeholder="—"
-                                  allowCustom={false}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                  <td style={tdStyle}>
+                    <ClinicalSelect
+                      value={data.anglesOd || ''}
+                      onChange={(v) => onChange('anglesOd', v)}
+                      options={EXT_ANGLES_OPTIONS}
+                      placeholder="—"
+                      allowCustom
+                    />
+                  </td>
+                  <td style={tdStyle}>
+                    <ClinicalSelect
+                      value={data.anglesOs || ''}
+                      onChange={(v) => onChange('anglesOs', v)}
+                      options={EXT_ANGLES_OPTIONS}
+                      placeholder="—"
+                      allowCustom
+                    />
                   </td>
                 </tr>
                 {/* Pupils row */}
