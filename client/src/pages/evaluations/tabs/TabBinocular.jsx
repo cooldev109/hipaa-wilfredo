@@ -22,13 +22,6 @@ export default function TabBinocular({ data, onChange }) {
                   <td style={tdLabelStyle}>{dist.toUpperCase()}</td>
                   <td style={tdStyle}>
                     <div style={{ display: 'flex', gap: 4, justifyContent: 'center', alignItems: 'center' }}>
-                      <ClinicalSelect
-                        value={data[`phoria${dist}HType`] || ''}
-                        onChange={(v) => onChange(`phoria${dist}HType`, v)}
-                        options={PHORIA_H_OPTIONS}
-                        placeholder="—"
-                        allowCustom={false}
-                      />
                       <input
                         type="number"
                         value={data[`phoria${dist}HAmount`] || ''}
@@ -36,23 +29,30 @@ export default function TabBinocular({ data, onChange }) {
                         placeholder="0"
                         style={{ ...cellInput, width: 50 }}
                       />
+                      <ClinicalSelect
+                        value={data[`phoria${dist}HType`] || ''}
+                        onChange={(v) => onChange(`phoria${dist}HType`, v)}
+                        options={PHORIA_H_OPTIONS}
+                        placeholder="—"
+                        allowCustom={false}
+                      />
                     </div>
                   </td>
                   <td style={tdStyle}>
                     <div style={{ display: 'flex', gap: 4, justifyContent: 'center', alignItems: 'center' }}>
-                      <ClinicalSelect
-                        value={data[`phoria${dist}VType`] || ''}
-                        onChange={(v) => onChange(`phoria${dist}VType`, v)}
-                        options={PHORIA_V_OPTIONS}
-                        placeholder="—"
-                        allowCustom={false}
-                      />
                       <input
                         type="number"
                         value={data[`phoria${dist}VAmount`] || ''}
                         onChange={(e) => onChange(`phoria${dist}VAmount`, e.target.value)}
                         placeholder="0"
                         style={{ ...cellInput, width: 50 }}
+                      />
+                      <ClinicalSelect
+                        value={data[`phoria${dist}VType`] || ''}
+                        onChange={(v) => onChange(`phoria${dist}VType`, v)}
+                        options={PHORIA_V_OPTIONS}
+                        placeholder="—"
+                        allowCustom={false}
                       />
                     </div>
                   </td>
