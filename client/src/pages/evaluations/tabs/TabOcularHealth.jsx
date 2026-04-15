@@ -20,67 +20,65 @@ const INTERNAL_FIELDS = [
   { key: 'maculaFr', label: 'MACULA/FR', options: INT_MACULA_OPTIONS },
 ];
 
-const NORMAL_VALUES = {};
-// External normal values
-NORMAL_VALUES.lidsLashOd = 'Healthy';
-NORMAL_VALUES.lidsLashOs = 'Healthy';
-NORMAL_VALUES.conjOd = 'Clear';
-NORMAL_VALUES.conjOs = 'Clear';
-NORMAL_VALUES.corneaOd = 'Clear';
-NORMAL_VALUES.corneaOs = 'Clear';
-NORMAL_VALUES.irisOd = 'Healthy';
-NORMAL_VALUES.irisOs = 'Healthy';
-NORMAL_VALUES.anglesOd = 'Open';
-NORMAL_VALUES.anglesOs = 'Open';
-NORMAL_VALUES.pupilsOd = 'PERRLA';
-NORMAL_VALUES.pupilsOs = 'PERRLA';
-// Internal normal values
-NORMAL_VALUES.lensOd = 'Clear';
-NORMAL_VALUES.lensOs = 'Clear';
-NORMAL_VALUES.mediaOd = 'Clear';
-NORMAL_VALUES.mediaOs = 'Clear';
-NORMAL_VALUES.cdOd = '0.3';
-NORMAL_VALUES.cdOs = '0.3';
-// Note: C/D accepts any text (fractions like "2/3" or decimals like "0.3")
-NORMAL_VALUES.avOd = '2:3';
-NORMAL_VALUES.avOs = '2:3';
-NORMAL_VALUES.maculaFrOd = 'Flat, good reflex';
-NORMAL_VALUES.maculaFrOs = 'Flat, good reflex';
+const EXTERNAL_NORMAL = {
+  lidsLashOd: 'Healthy',
+  lidsLashOs: 'Healthy',
+  conjOd: 'Clear',
+  conjOs: 'Clear',
+  corneaOd: 'Clear',
+  corneaOs: 'Clear',
+  irisOd: 'Healthy',
+  irisOs: 'Healthy',
+  anglesOd: 'Open',
+  anglesOs: 'Open',
+  pupilsOd: 'PERRLA',
+  pupilsOs: 'PERRLA',
+};
+
+const INTERNAL_NORMAL = {
+  lensOd: 'Clear',
+  lensOs: 'Clear',
+  mediaOd: 'Clear',
+  mediaOs: 'Clear',
+  cdOd: '0.3',
+  cdOs: '0.3',
+  avOd: '2:3',
+  avOs: '2:3',
+  maculaFrOd: 'Flat, good reflex',
+  maculaFrOs: 'Flat, good reflex',
+};
+
+const normalBtnStyle = {
+  padding: '4px 12px',
+  backgroundColor: 'var(--color-surface-alt)',
+  border: '1px solid var(--color-border)',
+  borderRadius: 'var(--radius-sm)',
+  cursor: 'pointer',
+  fontSize: 'var(--text-xs)',
+  fontWeight: 600,
+  color: 'var(--color-primary)',
+};
 
 export default function TabOcularHealth({ data, onChange }) {
-  const handleAllNormal = () => {
-    Object.entries(NORMAL_VALUES).forEach(([key, val]) => {
-      onChange(key, val);
-    });
+  const handleExternalNormal = () => {
+    Object.entries(EXTERNAL_NORMAL).forEach(([key, val]) => onChange(key, val));
+  };
+
+  const handleInternalNormal = () => {
+    Object.entries(INTERNAL_NORMAL).forEach(([key, val]) => onChange(key, val));
   };
 
   return (
     <div>
-      <div style={{ marginBottom: 12 }}>
-        <button
-          type="button"
-          onClick={handleAllNormal}
-          style={{
-            padding: '6px 16px',
-            backgroundColor: 'var(--color-surface-alt)',
-            border: '1px solid var(--color-border)',
-            borderRadius: 'var(--radius-sm)',
-            cursor: 'pointer',
-            fontSize: 'var(--text-sm)',
-            fontWeight: 600,
-            color: 'var(--color-text)',
-          }}
-        >
-          All Normal
-        </button>
-      </div>
-
       <div style={sectionStyle}>
         <h3 style={h3Style}>OCULAR HEALTH</h3>
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
           {/* External */}
           <div style={{ flex: 1, minWidth: 300 }}>
-            <div style={{ fontWeight: 700, fontSize: 'var(--text-sm)', color: 'var(--color-primary)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>EXTERNAL</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <div style={{ fontWeight: 700, fontSize: 'var(--text-sm)', color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>EXTERNAL</div>
+              <button type="button" onClick={handleExternalNormal} style={normalBtnStyle}>All Normal</button>
+            </div>
             <table style={tableStyle}>
               <thead>
                 <tr>
@@ -163,7 +161,10 @@ export default function TabOcularHealth({ data, onChange }) {
 
           {/* Internal */}
           <div style={{ flex: 1, minWidth: 300 }}>
-            <div style={{ fontWeight: 700, fontSize: 'var(--text-sm)', color: 'var(--color-primary)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.5px' }}>INTERNAL</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <div style={{ fontWeight: 700, fontSize: 'var(--text-sm)', color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>INTERNAL</div>
+              <button type="button" onClick={handleInternalNormal} style={normalBtnStyle}>All Normal</button>
+            </div>
             <table style={tableStyle}>
               <thead>
                 <tr>
