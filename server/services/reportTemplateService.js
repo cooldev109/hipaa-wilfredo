@@ -335,7 +335,7 @@ function garnerReversalBlock(patient, evaluation) {
         <tbody>
           <tr><td>Unknown Letters/Numbers</td><td>${evaluation.garnerUnknownErrors ?? '—'}</td><td>${evaluation.garnerUnknownMean ?? '—'}</td><td>${evaluation.garnerUnknownSd ?? '—'}</td></tr>
           <tr><td>Reversed Letters/Numbers</td><td>${evaluation.garnerReversedErrors ?? '—'}</td><td>${evaluation.garnerReversedMean ?? '—'}</td><td>${evaluation.garnerReversedSd ?? '—'}</td></tr>
-          <tr><td>Recognition</td><td>${evaluation.garnerRecognitionErrors ?? '—'}</td><td>${evaluation.garnerRecognitionMean ?? '—'}</td><td></td></tr>
+          <tr><td>Recognition</td><td>${evaluation.garnerRecognitionErrors ?? '—'}</td><td>${evaluation.garnerRecognitionMean ?? '—'}</td><td>${evaluation.garnerRecognitionSd ?? '—'}</td></tr>
         </tbody>
       </table>
       <p>Upon evaluating the results, the performance of ${patient.firstName} is <strong>below expectations</strong> for other children of the same age. Specifically, the patient presents difficulties with laterality and directionality, meaning they tend to confuse right with left or reverse letters and numbers.</p>

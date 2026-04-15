@@ -31,7 +31,7 @@ const EVALUATION_FIELDS = [
   'righteye_global_score', 'righteye_tracking_score', 'righteye_saccadic_score', 'righteye_fixation_score',
   'garner_unknown_errors', 'garner_unknown_mean', 'garner_unknown_sd',
   'garner_reversed_errors', 'garner_reversed_mean', 'garner_reversed_sd',
-  'garner_recognition_errors', 'garner_recognition_mean',
+  'garner_recognition_errors', 'garner_recognition_mean', 'garner_recognition_sd',
   'vmi_raw_score', 'vmi_chronological_age', 'vmi_perceptual_age', 'vmi_standard_score', 'vmi_percentile',
   'vp_raw_score', 'vp_chronological_age', 'vp_perceptual_age', 'vp_standard_score', 'vp_percentile',
   'assessment_notes', 'diagnoses', 'plan_rx_od', 'plan_rx_os', 'plan_rx_add', 'recommendations'

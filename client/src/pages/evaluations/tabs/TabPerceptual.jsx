@@ -80,15 +80,13 @@ export default function TabPerceptual({ data, onChange }) {
                   />
                 </td>
                 <td style={tdStyle}>
-                  {row.key !== 'garnerRecognition' ? (
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={data[`${row.key}Sd`] || ''}
-                      onChange={(e) => onChange(`${row.key}Sd`, e.target.value)}
-                      style={cellInput}
-                    />
-                  ) : null}
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={data[`${row.key}Sd`] || ''}
+                    onChange={(e) => onChange(`${row.key}Sd`, e.target.value)}
+                    style={cellInput}
+                  />
                 </td>
               </tr>
             ))}
