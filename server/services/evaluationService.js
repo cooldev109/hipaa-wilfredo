@@ -40,10 +40,11 @@ async function getEvaluation(id, userId, ipAddress, userAgent) {
     delete evaluation.dateOfBirthEncrypted;
   }
 
-  // Parse JSON fields
+  // Parse JSON fields (note: alias map converts some DB columns back to different frontend names)
   const jsonFields = ['diagnoses', 'recommendations', 'extAnglesOd', 'extAnglesOs',
-    'retinoscopyOd', 'retinoscopyOs', 'subjectiveRefractionOd', 'subjectiveRefractionOs',
-    'finalRxOd', 'finalRxOs', 'vergenceDistanceBi', 'vergenceDistanceBo',
+    'retinoscopyOd', 'retinoscopyOs', 'subjectiveOd', 'subjectiveOs', 'subjectiveRefractionOd', 'subjectiveRefractionOs',
+    'finalRxOd', 'finalRxOs', 'planRxOd', 'planRxOs',
+    'vergenceDistanceBi', 'vergenceDistanceBo',
     'vergenceNearBi', 'vergenceNearBo'];
 
   for (const field of jsonFields) {

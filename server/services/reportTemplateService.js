@@ -351,7 +351,7 @@ function vmiResultsBlock(patient, evaluation) {
       <table class="data-table">
         <thead><tr><th>Raw Score</th><th>Chronological Age</th><th>Perceptual Age Equivalent</th><th>Standard Score</th><th>Percentile</th></tr></thead>
         <tbody>
-          <tr><td>${evaluation.vmiRawScore ?? '—'}</td><td>${evaluation.vmiChronologicalAge || '—'}</td><td>${evaluation.vmiPerceptualAge || '—'}</td><td>${evaluation.vmiStandardScore ?? '—'}</td><td>${evaluation.vmiPercentile ?? '—'}</td></tr>
+          <tr><td>${evaluation.beeryVmiRawScore ?? evaluation.vmiRawScore ?? '—'}</td><td>${evaluation.beeryVmiChronologicalAge || evaluation.vmiChronologicalAge || '—'}</td><td>${evaluation.beeryVmiPerceptualAge || evaluation.vmiPerceptualAge || '—'}</td><td>${evaluation.beeryVmiStandardScore ?? evaluation.vmiStandardScore ?? '—'}</td><td>${evaluation.beeryVmiPercentile ?? evaluation.vmiPercentile ?? '—'}</td></tr>
         </tbody>
       </table>
       <p>The test shows that ${patient.firstName} is <strong>below average</strong> compared to a normative group of the same age. The main issue is that the student presents poor handwriting, extreme slowness, and significant fatigue when writing or performing manual tasks because the eyes and hands cannot coordinate with precision.</p>
@@ -367,7 +367,7 @@ function visualPerceptionBlock(patient, evaluation) {
       <table class="data-table">
         <thead><tr><th>Raw Score</th><th>Chronological Age</th><th>Perceptual Age Equivalent</th><th>Standard Score</th><th>Percentile</th></tr></thead>
         <tbody>
-          <tr><td>${evaluation.vpRawScore ?? '—'}</td><td>${evaluation.vpChronologicalAge || '—'}</td><td>${evaluation.vpPerceptualAge || '—'}</td><td>${evaluation.vpStandardScore ?? '—'}</td><td>${evaluation.vpPercentile ?? '—'}</td></tr>
+          <tr><td>${evaluation.visualPerceptionRawScore ?? evaluation.vpRawScore ?? '—'}</td><td>${evaluation.visualPerceptionChronologicalAge || evaluation.vpChronologicalAge || '—'}</td><td>${evaluation.visualPerceptionPerceptualAge || evaluation.vpPerceptualAge || '—'}</td><td>${evaluation.visualPerceptionStandardScore ?? evaluation.vpStandardScore ?? '—'}</td><td>${evaluation.visualPerceptionPercentile ?? evaluation.vpPercentile ?? '—'}</td></tr>
         </tbody>
       </table>
       <p>The test shows that ${patient.firstName} is <strong>below average</strong> compared to a normative group of the same age. The main issue is that the student confuses letters, makes alignment errors in mathematics, and becomes easily overwhelmed with text-heavy pages because the brain has difficulty correctly interpreting and organizing what the eyes are seeing.</p>
@@ -524,8 +524,8 @@ const BLOCK_REGISTRY = {
 
   // Conditional — perceptual
   garnerReversal: { fn: garnerReversalBlock, dataField: 'garnerUnknownErrors' },
-  vmiResults: { fn: vmiResultsBlock, dataField: 'vmiRawScore' },
-  visualPerception: { fn: visualPerceptionBlock, dataField: 'vpRawScore' },
+  vmiResults: { fn: vmiResultsBlock, dataFields: ['beeryVmiRawScore', 'vmiRawScore'] },
+  visualPerception: { fn: visualPerceptionBlock, dataFields: ['visualPerceptionRawScore', 'vpRawScore'] },
 
   // Always — summary and closing
   summaryDiagnoses: { fn: summaryDiagnosesBlock, always: true },
@@ -552,6 +552,8 @@ function getDefaultConditionBlocks(evaluation) {
       }
     } else if (config.dataField) {
       included = evaluation[config.dataField] != null;
+    } else if (config.dataFields) {
+      included = config.dataFields.some((f) => evaluation[f] != null);
     }
 
     return { key, included };
