@@ -413,7 +413,16 @@ function recommendationsBlock(patient, evaluation) {
   const recLabels = {
     visionTherapy: 'Functional Vision Therapy: We recommend starting an individualized program with one weekly 60-minute session. This treatment is designed to help develop the visual skills essential for reaching maximum potential and academic success.',
     therapeuticGlasses: 'Therapeutic Glasses: Continuous wear is indicated. Their purpose is to relax the visual system and prevent fatigue or headaches during daily activities.',
-    reEvaluation: 'Re-evaluation recommended.'
+    reEvaluation: 'Re-evaluation recommended.',
+    referralNeuro: 'Referral to Neurologist for further evaluation.',
+    referralPediatric: 'Referral to Pediatrician for further evaluation.',
+    referralPsych: 'Referral to Psychologist for further evaluation.',
+    referralOT: 'Referral to Occupational Therapist.',
+    referralSLP: 'Referral to Speech-Language Pathologist.',
+    computerGlasses: 'Computer Glasses: Indicated for prolonged near-work with digital devices.',
+    contactLenses: 'Contact Lenses: Evaluation for contact lens fitting recommended.',
+    sunglasses: 'Prescription Sunglasses: Recommended for outdoor protection.',
+    homotherapy: 'Home Vision Therapy Exercises: A set of daily exercises to complement in-office therapy.'
   };
 
   const activeRecs = recs.filter((r) => r.included);

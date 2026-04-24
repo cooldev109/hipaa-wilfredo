@@ -189,7 +189,13 @@ function formatRow(row) {
   if (!row) return null;
   const result = {};
   for (const [key, value] of Object.entries(row)) {
-    result[dbColumnToField(key)] = value;
+    // Always include the standard snake→camel conversion (used by report template).
+    result[snakeToCamel(key)] = value;
+    // Also include the frontend's aliased name if different (used by evaluation form).
+    const aliasedKey = dbColumnToField(key);
+    if (aliasedKey !== snakeToCamel(key)) {
+      result[aliasedKey] = value;
+    }
   }
   return result;
 }
