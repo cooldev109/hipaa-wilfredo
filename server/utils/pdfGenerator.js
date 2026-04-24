@@ -1,13 +1,27 @@
 const puppeteer = require('puppeteer');
 const logger = require('./logger');
 
-const CSS = `
+const FONT_OPTIONS = {
+  default: {
+    family: "'Segoe UI', Arial, Helvetica, sans-serif",
+    fontImport: ''
+  },
+  inter: {
+    family: "'Inter', 'Segoe UI', Arial, sans-serif",
+    fontImport: `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');`
+  }
+};
+
+function buildCss(fontKey) {
+  const font = FONT_OPTIONS[fontKey] || FONT_OPTIONS.default;
+  return `
+  ${font.fontImport}
   @page { margin: 60px 50px; size: letter; }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    font-family: 'Segoe UI', Arial, Helvetica, sans-serif;
+    font-family: ${font.family};
     font-size: 11pt;
     color: #1a1a1a;
     line-height: 1.5;
@@ -117,8 +131,9 @@ const CSS = `
     margin: 2px 0;
   }
 `;
+}
 
-async function generatePdf(htmlBody, doctorSignature, parentSignature) {
+async function generatePdf(htmlBody, doctorSignature, parentSignature, font = 'default') {
   let browser;
 
   try {
@@ -147,7 +162,7 @@ async function generatePdf(htmlBody, doctorSignature, parentSignature) {
     const fullHtml = `
       <!DOCTYPE html>
       <html>
-        <head><meta charset="utf-8"><style>${CSS}</style></head>
+        <head><meta charset="utf-8"><style>${buildCss(font)}</style></head>
         <body>${finalHtml}</body>
       </html>
     `;

@@ -13,7 +13,7 @@ const { AUDIT_ACTIONS } = require('../utils/constants');
 const env = require('../config/environment');
 const logger = require('../utils/logger');
 
-async function generateReport(evaluationId, conditionBlocks, userId, ipAddress, userAgent) {
+async function generateReport(evaluationId, conditionBlocks, userId, ipAddress, userAgent, font) {
   const evaluation = await evaluationModel.findById(evaluationId);
   if (!evaluation) throw { status: 404, errorCode: 'EVALUATION_NOT_FOUND' };
 
@@ -47,7 +47,7 @@ async function generateReport(evaluationId, conditionBlocks, userId, ipAddress, 
   });
 
   // Generate PDF
-  const pdfBuffer = await generatePdf(htmlBody);
+  const pdfBuffer = await generatePdf(htmlBody, undefined, undefined, font);
 
   // Save PDF to disk
   const storageDir = env.storagePath;
@@ -67,7 +67,7 @@ async function generateReport(evaluationId, conditionBlocks, userId, ipAddress, 
     evaluationId,
     patientId: patient.id,
     version,
-    reportData: { patient: { firstName: patient.firstName, lastName: patient.lastName }, evaluationDate: evaluation.evaluationDate },
+    reportData: { patient: { firstName: patient.firstName, lastName: patient.lastName }, evaluationDate: evaluation.evaluationDate, font: font || 'default' },
     conditionBlocks: blocks,
     createdBy: userId
   });
@@ -171,7 +171,8 @@ async function signDoctorReport(id, signatureData, userId, ipAddress, userAgent)
         licenseNumber: doctor.license_number || '—'
       });
 
-      const pdfBuffer = await generatePdf(htmlBody, signatureData, report.parentSignatureData);
+      const reportDataObj = typeof report.reportData === 'string' ? JSON.parse(report.reportData) : (report.reportData || {});
+      const pdfBuffer = await generatePdf(htmlBody, signatureData, report.parentSignatureData, reportDataObj.font || 'default');
       fs.writeFileSync(report.pdfFilePath, pdfBuffer);
       const fileHash = crypto.createHash('sha256').update(pdfBuffer).digest('hex');
       await reportModel.updatePdfPath(id, report.pdfFilePath, fileHash);
@@ -222,7 +223,8 @@ async function signParentReport(id, signatureData, signerName, userId, ipAddress
         licenseNumber: doctor.license_number || '—'
       });
 
-      const pdfBuffer = await generatePdf(htmlBody, report.doctorSignatureData || signatureData, signatureData);
+      const reportDataObj = typeof report.reportData === 'string' ? JSON.parse(report.reportData) : (report.reportData || {});
+      const pdfBuffer = await generatePdf(htmlBody, report.doctorSignatureData || signatureData, signatureData, reportDataObj.font || 'default');
       fs.writeFileSync(report.pdfFilePath, pdfBuffer);
       const fileHash = crypto.createHash('sha256').update(pdfBuffer).digest('hex');
       await reportModel.updatePdfPath(id, report.pdfFilePath, fileHash);

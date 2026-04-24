@@ -5,16 +5,17 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 
 async function generate(req, res, next) {
   try {
-    const { evaluationId, conditionBlocks } = req.body;
+    const { evaluationId, conditionBlocks, font } = req.body;
     if (!evaluationId) {
       return res.status(400).json({ success: false, errorCode: 'EVALUATION_ID_REQUIRED' });
     }
     if (!UUID_REGEX.test(evaluationId)) {
       return res.status(400).json({ success: false, errorCode: 'INVALID_UUID' });
     }
+    const fontKey = font === 'inter' ? 'inter' : 'default';
 
     const report = await reportService.generateReport(
-      evaluationId, conditionBlocks, req.user.userId, req.ip, req.get('User-Agent')
+      evaluationId, conditionBlocks, req.user.userId, req.ip, req.get('User-Agent'), fontKey
     );
 
     return res.status(201).json({ success: true, data: report });

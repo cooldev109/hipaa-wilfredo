@@ -14,6 +14,7 @@ export default function ReportListPage() {
   const [loading, setLoading] = useState(true);
   const [showGenerate, setShowGenerate] = useState(false);
   const [evalId, setEvalId] = useState('');
+  const [font, setFont] = useState('default');
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
 
@@ -40,7 +41,7 @@ export default function ReportListPage() {
     setGenerating(true);
     setError('');
     try {
-      const data = await generateReportApi(evalId.trim());
+      const data = await generateReportApi(evalId.trim(), undefined, font);
       if (data.success) {
         navigate(`/informes/${data.data.id}`);
       }
@@ -79,6 +80,17 @@ export default function ReportListPage() {
             <div style={{ flex: 1 }}>
               <label>{t('reports.evaluationId')}</label>
               <EvaluationPicker value={evalId} onChange={(id) => setEvalId(id)} placeholder="Select a completed evaluation..." />
+            </div>
+            <div style={{ width: 180 }}>
+              <label>Font</label>
+              <select
+                value={font}
+                onChange={(e) => setFont(e.target.value)}
+                style={{ width: '100%', padding: 'var(--space-sm)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)', fontSize: 'var(--text-base)' }}
+              >
+                <option value="default">Default (Segoe UI)</option>
+                <option value="inter">Inter</option>
+              </select>
             </div>
             <button type="submit" disabled={generating} style={primaryBtnStyle}>
               {generating ? t('common.loading') : t('reports.generate')}

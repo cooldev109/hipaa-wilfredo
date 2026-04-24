@@ -1,7 +1,7 @@
 import api from './api';
 
-export async function generateReportApi(evaluationId, conditionBlocks) {
-  const response = await api.post('/reports/generate', { evaluationId, conditionBlocks });
+export async function generateReportApi(evaluationId, conditionBlocks, font) {
+  const response = await api.post('/reports/generate', { evaluationId, conditionBlocks, font });
   return response.data;
 }
 
