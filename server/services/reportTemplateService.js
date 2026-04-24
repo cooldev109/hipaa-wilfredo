@@ -169,7 +169,12 @@ function visualAcuityBlock(patient, evaluation) {
 
 // NEW: VA finding narrative
 function vaFindingBlock(patient, evaluation) {
-  const hasReduced = (v) => v && parseInt(v) > 20;
+  const hasReduced = (v) => {
+    if (!v) return false;
+    const parts = String(v).split('/');
+    const denom = parseInt(parts[1] || parts[0], 10);
+    return Number.isFinite(denom) && denom > 20;
+  };
   const distReduced = hasReduced(evaluation.vaDistanceUnaidedOd) || hasReduced(evaluation.vaDistanceUnaidedOs);
   const nearReduced = hasReduced(evaluation.vaNearUnaidedOd) || hasReduced(evaluation.vaNearUnaidedOs);
 
