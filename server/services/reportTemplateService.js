@@ -7,6 +7,20 @@
  */
 
 const dayjs = require('dayjs');
+const fs = require('fs');
+const path = require('path');
+
+// Load the clinic logo once as a base64 data URI so Puppeteer can render it
+// without needing network or file:// access.
+const LOGO_DATA_URI = (() => {
+  try {
+    const logoPath = path.join(__dirname, '..', 'assets', 'logo.png');
+    const buf = fs.readFileSync(logoPath);
+    return `data:image/png;base64,${buf.toString('base64')}`;
+  } catch {
+    return null;
+  }
+})();
 
 function calculateAge(dob) {
   const d = dayjs(dob);
@@ -37,6 +51,9 @@ function formatRx(rxData) {
 // ============================================
 
 function headerBlock(patient, evaluation) {
+  const logoHtml = LOGO_DATA_URI
+    ? `<img class="clinic-logo" src="${LOGO_DATA_URI}" alt="Neuronita" />`
+    : `<h1 class="clinic-name">NEURONITA</h1>`;
   return `
     <div class="header">
       <div class="header-left">
@@ -45,7 +62,7 @@ function headerBlock(patient, evaluation) {
         Caguas PR 00725
       </div>
       <div class="header-center">
-        <h1 class="clinic-name">NEURONITA</h1>
+        ${logoHtml}
         <p class="clinic-sub">Neuro-Cognitive Rehabilitation Clinic</p>
       </div>
       <div class="header-right">
@@ -242,6 +259,12 @@ function oculomotorControlBlock(patient, evaluation) {
 }
 
 function rightEyeResultsBlock(patient, evaluation) {
+  const wpm = evaluation.readingEyeqWpm;
+  const grade = evaluation.readingEyeqGradeLevel;
+  const readingEyeqSentence = (wpm != null || grade)
+    ? `<p>In the Reading EyeQ test, ${patient.firstName} obtained a reading level equivalent to <strong>${grade || '—'}</strong>, with a reading rate of <strong>${wpm ?? '—'} words per minute</strong>, where the average should be <strong>80 words per minute</strong>.</p>`
+    : '';
+
   return `
     <div class="section">
       <h3>READING EYE MOVEMENT EVALUATION (RightEye)</h3>
@@ -256,6 +279,7 @@ function rightEyeResultsBlock(patient, evaluation) {
       </table>
       <p>${patient.firstName} obtained a Global score of <strong>${evaluation.righteyeGlobalScore || '—'}</strong>, where the expected score is greater than 75.</p>
       <p>These results indicate a diagnosis of <strong>OCULOMOTOR DYSFUNCTION</strong>. Specifically, saccadic dysfunctions will cause loss of place while reading, skipping words, and increased difficulty when copying from the board. Additionally, poor eye movement will make sports and activities involving movement more difficult. Your child struggles to follow moving objects. Their eyes tire quickly and lose precision, especially when they have to think and look at the same time (as happens in school).</p>
+      ${readingEyeqSentence}
     </div>
   `;
 }
@@ -313,15 +337,6 @@ function depthPerceptionBlock(patient, evaluation) {
       <h3>DEPTH PERCEPTION</h3>
       <p>Depth perception is the ability to see things in three dimensions (including length, width, and depth), and to judge the distance of an object. Good depth perception generally requires binocular vision (seeing with both eyes). When both eyes see clearly, the brain efficiently processes the data to produce a single image, and we perceive what is known as stereopsis or three-dimensional vision.</p>
       <p>${patient.firstName} presents reduced depth perception of <strong>${evaluation.stereoResult || '—'} arc seconds</strong>.</p>
-    </div>
-  `;
-}
-
-function fusionTestBlock(patient, evaluation) {
-  return `
-    <div class="section">
-      <h3>FUSION TEST</h3>
-      <p>The fusion test evaluates the ability to combine the images from both eyes into a single, clear image. This skill is fundamental for comfortable and efficient binocular vision. Difficulty with fusion can contribute to double vision, eye strain, and reading difficulties.</p>
     </div>
   `;
 }
@@ -532,9 +547,8 @@ const BLOCK_REGISTRY = {
   convergenceInsufficiency: { fn: convergenceInsufficiencyBlock, diagnosisCode: 'H51.11' },
   convergenceExcess: { fn: convergenceExcessBlock, diagnosisCode: 'H51.12' },
 
-  // Conditional — depth & fusion
+  // Conditional — depth
   depthPerception: { fn: depthPerceptionBlock, dataField: 'stereoResult' },
-  fusionTest: { fn: fusionTestBlock, dataField: 'stereoResult' },
 
   // Conditional — perceptual
   garnerReversal: { fn: garnerReversalBlock, dataField: 'garnerUnknownErrors' },

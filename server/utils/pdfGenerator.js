@@ -26,6 +26,7 @@ const CSS = `
   .header-right { text-align: right; }
 
   .header-center { text-align: center; }
+  .clinic-logo { max-height: 60px; width: auto; display: block; margin: 0 auto 4px; }
   .clinic-name { font-size: 18pt; color: #5B2C8E; margin: 0; letter-spacing: 2px; }
   .clinic-sub { font-size: 8pt; color: #888; margin: 0; }
 
