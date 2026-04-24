@@ -37,6 +37,29 @@ export default function TabOculomotor({ data, onChange }) {
             ))}
           </tbody>
         </table>
+
+        <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div>
+            <label style={labelStyle}>Reading EyeQ — Grade Level</label>
+            <input
+              type="text"
+              placeholder="e.g. 1st grade"
+              value={data.readingEyeqGradeLevel || ''}
+              onChange={(e) => onChange('readingEyeqGradeLevel', e.target.value)}
+              style={{ ...cellInput, width: '100%', textAlign: 'left' }}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>Reading EyeQ — Words per Minute</label>
+            <input
+              type="number"
+              placeholder="e.g. 31"
+              value={data.readingEyeqWpm || ''}
+              onChange={(e) => onChange('readingEyeqWpm', e.target.value)}
+              style={{ ...cellInput, width: '100%', textAlign: 'left' }}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

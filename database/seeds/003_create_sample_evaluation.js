@@ -189,6 +189,8 @@ exports.seed = async function (knex) {
     righteye_tracking_score: 58,
     righteye_saccadic_score: 65,
     righteye_fixation_score: 70,
+    reading_eyeq_wpm: 31,
+    reading_eyeq_grade_level: '1st grade',
 
     // ===== Garner Reversal =====
     garner_unknown_errors: 2,

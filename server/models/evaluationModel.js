@@ -50,6 +50,7 @@ const EVALUATION_FIELDS = [
   'int_macula_fr_od', 'int_macula_fr_os',
   // RightEye
   'righteye_global_score', 'righteye_tracking_score', 'righteye_saccadic_score', 'righteye_fixation_score',
+  'reading_eyeq_wpm', 'reading_eyeq_grade_level',
   // Perceptual
   'garner_unknown_errors', 'garner_unknown_mean', 'garner_unknown_sd',
   'garner_reversed_errors', 'garner_reversed_mean', 'garner_reversed_sd',
@@ -136,6 +137,12 @@ const FIELD_ALIAS_MAP = {
   visualPerceptionPerceptualAge: 'vp_perceptual_age',
   visualPerceptionStandardScore: 'vp_standard_score',
   visualPerceptionPercentile: 'vp_percentile',
+
+  // RightEye — frontend uses rightEye* short names, DB stores righteye_*_score
+  rightEyeTracking: 'righteye_tracking_score',
+  rightEyeSaccadic: 'righteye_saccadic_score',
+  rightEyeFixation: 'righteye_fixation_score',
+  rightEyeGlobal: 'righteye_global_score',
 };
 
 // Reverse map: snake_case DB column → frontend camelCase name
