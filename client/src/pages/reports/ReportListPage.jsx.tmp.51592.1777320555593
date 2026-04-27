@@ -42,7 +42,7 @@ export default function ReportListPage() {
     setGenerating(true);
     setError('');
     try {
-      const data = await generateReportApi(evalId.trim(), undefined, font, reportLang);
+      const data = await generateReportApi(evalId.trim(), undefined, font);
       if (data.success) {
         navigate(`/informes/${data.data.id}`);
       }
@@ -81,17 +81,6 @@ export default function ReportListPage() {
             <div style={{ flex: 1 }}>
               <label>{t('reports.evaluationId')}</label>
               <EvaluationPicker value={evalId} onChange={(id) => setEvalId(id)} placeholder="Select a completed evaluation..." />
-            </div>
-            <div style={{ width: 160 }}>
-              <label>Language</label>
-              <select
-                value={reportLang}
-                onChange={(e) => setReportLang(e.target.value)}
-                style={{ width: '100%', padding: 'var(--space-sm)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--color-surface)', color: 'var(--color-text)', fontSize: 'var(--text-base)' }}
-              >
-                <option value="es">Español</option>
-                <option value="en">English</option>
-              </select>
             </div>
             <div style={{ width: 180 }}>
               <label>Font</label>

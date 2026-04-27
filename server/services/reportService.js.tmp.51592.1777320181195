@@ -43,8 +43,7 @@ async function generateReport(evaluationId, conditionBlocks, userId, ipAddress, 
     history,
     conditionBlocks: blocks,
     doctorName: `Dr. ${doctor.first_name} ${doctor.last_name}`,
-    licenseNumber: doctor.license_number || '—',
-    lang
+    licenseNumber: doctor.license_number || '—'
   });
 
   // Generate PDF
@@ -68,7 +67,7 @@ async function generateReport(evaluationId, conditionBlocks, userId, ipAddress, 
     evaluationId,
     patientId: patient.id,
     version,
-    reportData: { patient: { firstName: patient.firstName, lastName: patient.lastName }, evaluationDate: evaluation.evaluationDate, font: font || 'default', lang: lang || 'en' },
+    reportData: { patient: { firstName: patient.firstName, lastName: patient.lastName }, evaluationDate: evaluation.evaluationDate, font: font || 'default' },
     conditionBlocks: blocks,
     createdBy: userId
   });
@@ -165,13 +164,11 @@ async function signDoctorReport(id, signatureData, userId, ipAddress, userAgent)
       }
 
       const blocks = report.conditionBlocks;
-      const reportDataObj2 = typeof report.reportData === 'string' ? JSON.parse(report.reportData) : (report.reportData || {});
       const htmlBody = assembleReport({
         patient, evaluation, history,
         conditionBlocks: typeof blocks === 'string' ? JSON.parse(blocks) : blocks,
         doctorName: `Dr. ${doctor.first_name} ${doctor.last_name}`,
-        licenseNumber: doctor.license_number || '—',
-        lang: reportDataObj2.lang || 'en'
+        licenseNumber: doctor.license_number || '—'
       });
 
       const reportDataObj = typeof report.reportData === 'string' ? JSON.parse(report.reportData) : (report.reportData || {});
@@ -219,13 +216,11 @@ async function signParentReport(id, signatureData, signerName, userId, ipAddress
       }
 
       const blocks = report.conditionBlocks;
-      const reportDataObj2 = typeof report.reportData === 'string' ? JSON.parse(report.reportData) : (report.reportData || {});
       const htmlBody = assembleReport({
         patient, evaluation, history,
         conditionBlocks: typeof blocks === 'string' ? JSON.parse(blocks) : blocks,
         doctorName: `Dr. ${doctor.first_name} ${doctor.last_name}`,
-        licenseNumber: doctor.license_number || '—',
-        lang: reportDataObj2.lang || 'en'
+        licenseNumber: doctor.license_number || '—'
       });
 
       const reportDataObj = typeof report.reportData === 'string' ? JSON.parse(report.reportData) : (report.reportData || {});
