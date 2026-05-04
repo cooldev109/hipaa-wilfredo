@@ -820,14 +820,10 @@ function interventionPlanBlock(patient, evaluation, lang) {
 function visualHygieneBlock(patient, evaluation, lang) {
   const t = L(lang);
   const items = t.hygieneItems.map(([title, desc]) => `<li><strong>${title}</strong> ${desc}</li>`).join('');
-  const deskImage = INCLINED_DESK_DATA_URI
-    ? `<div class="hygiene-image"><img src="${INCLINED_DESK_DATA_URI}" alt="Inclined desk" /></div>`
-    : '';
   return `
     <div class="section">
       <h3>${t.hygieneHeading}</h3>
       <p>${t.hygieneIntro}</p>
-      ${deskImage}
       <h4>${t.hygieneSubheading}</h4>
       <ul>${items}</ul>
     </div>

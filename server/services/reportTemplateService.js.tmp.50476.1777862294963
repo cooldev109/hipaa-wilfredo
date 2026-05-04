@@ -23,20 +23,6 @@ const LOGO_DATA_URI = (() => {
   }
 })();
 
-// Inclined desk illustration shown alongside the Visual Hygiene recommendations.
-// Optional: skipped silently if the file isn't present.
-const INCLINED_DESK_DATA_URI = (() => {
-  for (const ext of ['png', 'jpg', 'jpeg']) {
-    try {
-      const p = path.join(__dirname, '..', 'assets', `inclined-desk.${ext}`);
-      const buf = fs.readFileSync(p);
-      const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
-      return `data:${mime};base64,${buf.toString('base64')}`;
-    } catch { /* try next */ }
-  }
-  return null;
-})();
-
 function calculateAge(dob) {
   const d = dayjs(dob);
   const now = dayjs();
@@ -820,14 +806,10 @@ function interventionPlanBlock(patient, evaluation, lang) {
 function visualHygieneBlock(patient, evaluation, lang) {
   const t = L(lang);
   const items = t.hygieneItems.map(([title, desc]) => `<li><strong>${title}</strong> ${desc}</li>`).join('');
-  const deskImage = INCLINED_DESK_DATA_URI
-    ? `<div class="hygiene-image"><img src="${INCLINED_DESK_DATA_URI}" alt="Inclined desk" /></div>`
-    : '';
   return `
     <div class="section">
       <h3>${t.hygieneHeading}</h3>
       <p>${t.hygieneIntro}</p>
-      ${deskImage}
       <h4>${t.hygieneSubheading}</h4>
       <ul>${items}</ul>
     </div>
