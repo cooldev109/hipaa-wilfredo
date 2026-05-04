@@ -61,8 +61,8 @@ async function updatePdfPath(id, pdfFilePath, pdfFileHash) {
 
 async function updateDocxPath(id, docxFilePath, docxFileHash) {
   await pool.query(
-    'UPDATE reports SET docx_file_path = $1, docx_file_hash = $2, updated_at = NOW() WHERE id = $3',
-    [docxFilePath, docxFileHash, id]
+    'UPDATE reports SET docx_file_path = $1, docx_file_hash = $2, status = $3, updated_at = NOW() WHERE id = $4',
+    [docxFilePath, docxFileHash, 'final', id]
   );
 }
 

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../hooks/useLanguage';
-import { listReportsApi, generateReportApi, downloadReportApi, downloadReportDocxApi } from '../../services/reportService';
+import { listReportsApi, generateReportApi, downloadReportDocxApi } from '../../services/reportService';
 import EvaluationPicker from '../../components/forms/EvaluationPicker';
-import { Plus, Eye, Download, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Eye, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import dayjs from 'dayjs';
 
 export default function ReportListPage() {
@@ -36,16 +36,14 @@ export default function ReportListPage() {
 
   useEffect(() => { loadReports(); }, []);
 
-  const handleDownload = async (e, reportId, format) => {
+  const handleDownload = async (e, reportId) => {
     e.stopPropagation();
     try {
-      const blob = format === 'docx'
-        ? await downloadReportDocxApi(reportId)
-        : await downloadReportApi(reportId);
+      const blob = await downloadReportDocxApi(reportId);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `report_${reportId}.${format === 'docx' ? 'docx' : 'pdf'}`;
+      a.download = `report_${reportId}.docx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -168,11 +166,8 @@ export default function ReportListPage() {
                       <button onClick={(e) => { e.stopPropagation(); navigate(`/informes/${r.id}`); }} style={actionBtnStyle} title="View">
                         <Eye size={12} />
                       </button>
-                      <button onClick={(e) => handleDownload(e, r.id, 'pdf')} style={actionBtnStyle} title="Download PDF">
+                      <button onClick={(e) => handleDownload(e, r.id)} style={actionBtnStyle} title="Download Word">
                         <Download size={12} />
-                      </button>
-                      <button onClick={(e) => handleDownload(e, r.id, 'docx')} style={actionBtnStyle} title="Download Word">
-                        <FileText size={12} />
                       </button>
                     </div>
                   </td>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../hooks/useLanguage';
-import { getReportApi, downloadReportApi, signDoctorApi, signParentApi } from '../../services/reportService';
+import { getReportApi, downloadReportDocxApi, signDoctorApi, signParentApi } from '../../services/reportService';
 import SignatureCanvas from '../../components/forms/SignatureCanvas';
 import { ArrowLeft, Download, PenTool, FileCheck, Loader2 } from 'lucide-react';
 import dayjs from 'dayjs';
@@ -33,11 +33,11 @@ export default function ReportPreviewPage() {
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      const blob = await downloadReportApi(id);
+      const blob = await downloadReportDocxApi(id);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `report_${id}.pdf`;
+      a.download = `report_${id}.docx`;
       a.click();
       window.URL.revokeObjectURL(url);
     } catch {
@@ -122,7 +122,7 @@ export default function ReportPreviewPage() {
           <InfoItem label={t('report.status')} value={t(`status.${report.status}`)} />
           <InfoItem label={t('report.doctorSigned')} value={report.doctorSignedAt ? dayjs(report.doctorSignedAt).format('DD/MM/YYYY HH:mm') : '—'} />
           <InfoItem label={t('report.parentSigned')} value={report.parentSignedAt ? `${report.parentSignerName} — ${dayjs(report.parentSignedAt).format('DD/MM/YYYY HH:mm')}` : '—'} />
-          <InfoItem label={t('report.pdfHash')} value={report.pdfFileHash ? report.pdfFileHash.substring(0, 16) + '...' : '—'} />
+          <InfoItem label={t('report.pdfHash')} value={report.docxFileHash ? report.docxFileHash.substring(0, 16) + '...' : (report.pdfFileHash ? report.pdfFileHash.substring(0, 16) + '...' : '—')} />
         </div>
       </div>
 
