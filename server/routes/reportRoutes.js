@@ -13,6 +13,7 @@ router.post('/generate', reportController.generate);
 router.get('/', reportController.list);
 router.get('/:id', validateUUIDParam, reportController.getById);
 router.get('/:id/download', validateUUIDParam, reportController.download);
+router.get('/:id/download-docx', validateUUIDParam, reportController.downloadDocx);
 router.post('/:id/sign/doctor', validateUUIDParam, reportController.signDoctor);
 router.post('/:id/sign/parent', validateUUIDParam, reportController.signParent);
 router.get('/evaluation/:evaluationId', validateUUIDParam, reportController.listByEvaluation);

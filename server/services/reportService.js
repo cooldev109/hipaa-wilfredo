@@ -9,6 +9,7 @@ const userModel = require('../models/userModel');
 const auditLogModel = require('../models/auditLogModel');
 const { assembleReport, getDefaultConditionBlocks } = require('./reportTemplateService');
 const { generatePdf } = require('../utils/pdfGenerator');
+const { generateDocx } = require('../utils/docxGenerator');
 const { AUDIT_ACTIONS } = require('../utils/constants');
 const env = require('../config/environment');
 const logger = require('../utils/logger');
@@ -47,21 +48,27 @@ async function generateReport(evaluationId, conditionBlocks, userId, ipAddress, 
     lang
   });
 
-  // Generate PDF
-  const pdfBuffer = await generatePdf(htmlBody, undefined, undefined, font);
+  // Generate PDF and DOCX in parallel from the same HTML body
+  const [pdfBuffer, docxBuffer] = await Promise.all([
+    generatePdf(htmlBody, undefined, undefined, font),
+    generateDocx(htmlBody, undefined, undefined, font)
+  ]);
 
-  // Save PDF to disk
+  // Save both files to disk
   const storageDir = env.storagePath;
   if (!fs.existsSync(storageDir)) {
     fs.mkdirSync(storageDir, { recursive: true });
   }
 
   const dateStr = new Date(evaluation.evaluationDate).toISOString().split('T')[0];
-  const fileName = `report_${patient.id}_${dateStr}_v${version}.pdf`;
-  const filePath = path.join(storageDir, fileName);
+  const baseName = `report_${patient.id}_${dateStr}_v${version}`;
+  const filePath = path.join(storageDir, `${baseName}.pdf`);
+  const docxFilePath = path.join(storageDir, `${baseName}.docx`);
   fs.writeFileSync(filePath, pdfBuffer);
+  fs.writeFileSync(docxFilePath, docxBuffer);
 
   const fileHash = crypto.createHash('sha256').update(pdfBuffer).digest('hex');
+  const docxFileHash = crypto.createHash('sha256').update(docxBuffer).digest('hex');
 
   // Create report record
   const report = await reportModel.create({
@@ -74,6 +81,7 @@ async function generateReport(evaluationId, conditionBlocks, userId, ipAddress, 
   });
 
   await reportModel.updatePdfPath(report.id, filePath, fileHash);
+  await reportModel.updateDocxPath(report.id, docxFilePath, docxFileHash);
 
   await auditLogModel.create({
     userId,
@@ -120,6 +128,26 @@ async function downloadReport(id, userId, ipAddress, userAgent) {
   });
 
   return { filePath: report.pdfFilePath, report };
+}
+
+async function downloadReportDocx(id, userId, ipAddress, userAgent) {
+  const report = await reportModel.findById(id);
+  if (!report) throw { status: 404, errorCode: 'REPORT_NOT_FOUND' };
+  if (!report.docxFilePath || !fs.existsSync(report.docxFilePath)) {
+    throw { status: 404, errorCode: 'DOCX_NOT_FOUND' };
+  }
+
+  await auditLogModel.create({
+    userId,
+    action: AUDIT_ACTIONS.REPORT_DOWNLOAD,
+    resource: 'reports',
+    resourceId: id,
+    ipAddress,
+    userAgent,
+    details: { format: 'docx' }
+  });
+
+  return { filePath: report.docxFilePath, report };
 }
 
 async function listReports(filters) {
@@ -175,12 +203,21 @@ async function signDoctorReport(id, signatureData, userId, ipAddress, userAgent)
       });
 
       const reportDataObj = typeof report.reportData === 'string' ? JSON.parse(report.reportData) : (report.reportData || {});
-      const pdfBuffer = await generatePdf(htmlBody, signatureData, report.parentSignatureData, reportDataObj.font || 'default');
+      const fontKey = reportDataObj.font || 'default';
+      const [pdfBuffer, docxBuffer] = await Promise.all([
+        generatePdf(htmlBody, signatureData, report.parentSignatureData, fontKey),
+        generateDocx(htmlBody, signatureData, report.parentSignatureData, fontKey)
+      ]);
       fs.writeFileSync(report.pdfFilePath, pdfBuffer);
       const fileHash = crypto.createHash('sha256').update(pdfBuffer).digest('hex');
       await reportModel.updatePdfPath(id, report.pdfFilePath, fileHash);
+      if (report.docxFilePath) {
+        fs.writeFileSync(report.docxFilePath, docxBuffer);
+        const docxHash = crypto.createHash('sha256').update(docxBuffer).digest('hex');
+        await reportModel.updateDocxPath(id, report.docxFilePath, docxHash);
+      }
     } catch (err) {
-      logger.error({ err }, 'Failed to regenerate PDF with doctor signature');
+      logger.error({ err }, 'Failed to regenerate PDF/DOCX with doctor signature');
     }
   }
 
@@ -229,12 +266,22 @@ async function signParentReport(id, signatureData, signerName, userId, ipAddress
       });
 
       const reportDataObj = typeof report.reportData === 'string' ? JSON.parse(report.reportData) : (report.reportData || {});
-      const pdfBuffer = await generatePdf(htmlBody, report.doctorSignatureData || signatureData, signatureData, reportDataObj.font || 'default');
+      const fontKey = reportDataObj.font || 'default';
+      const docSig = report.doctorSignatureData || signatureData;
+      const [pdfBuffer, docxBuffer] = await Promise.all([
+        generatePdf(htmlBody, docSig, signatureData, fontKey),
+        generateDocx(htmlBody, docSig, signatureData, fontKey)
+      ]);
       fs.writeFileSync(report.pdfFilePath, pdfBuffer);
       const fileHash = crypto.createHash('sha256').update(pdfBuffer).digest('hex');
       await reportModel.updatePdfPath(id, report.pdfFilePath, fileHash);
+      if (report.docxFilePath) {
+        fs.writeFileSync(report.docxFilePath, docxBuffer);
+        const docxHash = crypto.createHash('sha256').update(docxBuffer).digest('hex');
+        await reportModel.updateDocxPath(id, report.docxFilePath, docxHash);
+      }
     } catch (err) {
-      logger.error({ err }, 'Failed to regenerate PDF with parent signature');
+      logger.error({ err }, 'Failed to regenerate PDF/DOCX with parent signature');
     }
   }
 
@@ -251,4 +298,4 @@ async function signParentReport(id, signatureData, signerName, userId, ipAddress
   return updated;
 }
 
-module.exports = { generateReport, getReport, downloadReport, listReports, listByEvaluation, signDoctorReport, signParentReport };
+module.exports = { generateReport, getReport, downloadReport, downloadReportDocx, listReports, listByEvaluation, signDoctorReport, signParentReport };

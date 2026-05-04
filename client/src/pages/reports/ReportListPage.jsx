@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../hooks/useLanguage';
-import { listReportsApi, generateReportApi } from '../../services/reportService';
+import { listReportsApi, generateReportApi, downloadReportApi, downloadReportDocxApi } from '../../services/reportService';
 import EvaluationPicker from '../../components/forms/EvaluationPicker';
-import { Plus, Eye, Download, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Eye, Download, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import dayjs from 'dayjs';
 
 export default function ReportListPage() {
@@ -35,6 +35,25 @@ export default function ReportListPage() {
   };
 
   useEffect(() => { loadReports(); }, []);
+
+  const handleDownload = async (e, reportId, format) => {
+    e.stopPropagation();
+    try {
+      const blob = format === 'docx'
+        ? await downloadReportDocxApi(reportId)
+        : await downloadReportApi(reportId);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `report_${reportId}.${format === 'docx' ? 'docx' : 'pdf'}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      // ignore — user can retry
+    }
+  };
 
   const handleGenerate = async (e) => {
     e.preventDefault();
@@ -146,8 +165,14 @@ export default function ReportListPage() {
                   <td style={tdStyle}>{r.doctorSignedAt ? dayjs(r.doctorSignedAt).format('DD/MM HH:mm') : '—'}</td>
                   <td style={{ ...tdStyle, textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
-                      <button onClick={(e) => { e.stopPropagation(); navigate(`/informes/${r.id}`); }} style={actionBtnStyle}>
+                      <button onClick={(e) => { e.stopPropagation(); navigate(`/informes/${r.id}`); }} style={actionBtnStyle} title="View">
                         <Eye size={12} />
+                      </button>
+                      <button onClick={(e) => handleDownload(e, r.id, 'pdf')} style={actionBtnStyle} title="Download PDF">
+                        <Download size={12} />
+                      </button>
+                      <button onClick={(e) => handleDownload(e, r.id, 'docx')} style={actionBtnStyle} title="Download Word">
+                        <FileText size={12} />
                       </button>
                     </div>
                   </td>

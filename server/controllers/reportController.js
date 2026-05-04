@@ -55,6 +55,23 @@ async function download(req, res, next) {
   }
 }
 
+async function downloadDocx(req, res, next) {
+  try {
+    const { filePath } = await reportService.downloadReportDocx(
+      req.params.id, req.user.userId, req.ip, req.get('User-Agent')
+    );
+
+    const absolutePath = path.isAbsolute(filePath) ? filePath : path.resolve(filePath);
+    const fileName = path.basename(absolutePath);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.sendFile(absolutePath);
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ success: false, errorCode: err.errorCode });
+    next(err);
+  }
+}
+
 async function list(req, res, next) {
   try {
     const { page = 1, limit = 25 } = req.query;
@@ -110,4 +127,4 @@ async function signParent(req, res, next) {
   }
 }
 
-module.exports = { generate, getById, download, list, listByEvaluation, signDoctor, signParent };
+module.exports = { generate, getById, download, downloadDocx, list, listByEvaluation, signDoctor, signParent };

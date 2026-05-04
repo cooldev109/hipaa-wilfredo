@@ -59,6 +59,13 @@ async function updatePdfPath(id, pdfFilePath, pdfFileHash) {
   );
 }
 
+async function updateDocxPath(id, docxFilePath, docxFileHash) {
+  await pool.query(
+    'UPDATE reports SET docx_file_path = $1, docx_file_hash = $2, updated_at = NOW() WHERE id = $3',
+    [docxFilePath, docxFileHash, id]
+  );
+}
+
 async function signDoctor(id, signatureData, signedBy) {
   const result = await pool.query(
     `UPDATE reports SET doctor_signature_data = $1, doctor_signed_at = NOW(), doctor_signed_by = $2, updated_at = NOW()
@@ -89,4 +96,4 @@ function formatRow(row) {
   return result;
 }
 
-module.exports = { create, findById, findByEvaluationId, findAll, getNextVersion, updatePdfPath, signDoctor, signParent };
+module.exports = { create, findById, findByEvaluationId, findAll, getNextVersion, updatePdfPath, updateDocxPath, signDoctor, signParent };

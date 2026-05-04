@@ -15,6 +15,11 @@ export async function downloadReportApi(id) {
   return response.data;
 }
 
+export async function downloadReportDocxApi(id) {
+  const response = await api.get(`/reports/${id}/download-docx`, { responseType: 'blob' });
+  return response.data;
+}
+
 export async function listReportsApi({ page = 1, limit = 25 } = {}) {
   const response = await api.get(`/reports?page=${page}&limit=${limit}`);
   return response.data;
