@@ -1,5 +1,30 @@
 const HTMLtoDOCX = require('html-to-docx');
+const JSZip = require('jszip');
 const logger = require('./logger');
+
+// Replace empty <tblBorders/> / <tcBorders/> with explicit "nil" border specs
+// so Word doesn't fall back to its default thin gridlines on the header table.
+const NIL_TBL_BORDERS = '<tblBorders><top val="nil"/><left val="nil"/><bottom val="nil"/><right val="nil"/><insideH val="nil"/><insideV val="nil"/></tblBorders>';
+const NIL_TC_BORDERS = '<tcBorders><top val="nil"/><left val="nil"/><bottom val="nil"/><right val="nil"/></tcBorders>';
+
+async function suppressHeaderTableBorders(buffer) {
+  const zip = await JSZip.loadAsync(buffer);
+  const headerEntry = zip.file('word/header1.xml');
+  if (!headerEntry) return buffer;
+  let xml = await headerEntry.async('string');
+  let touched = false;
+  if (xml.includes('<tblBorders/>')) {
+    xml = xml.replace('<tblBorders/>', NIL_TBL_BORDERS);
+    touched = true;
+  }
+  if (xml.includes('<tcBorders/>')) {
+    xml = xml.replace(/<tcBorders\/>/g, NIL_TC_BORDERS);
+    touched = true;
+  }
+  if (!touched) return buffer;
+  zip.file('word/header1.xml', xml);
+  return zip.generateAsync({ type: 'nodebuffer' });
+}
 
 const FONT_FAMILY = {
   default: 'Calibri',
@@ -94,7 +119,7 @@ async function generateDocx(htmlBody, doctorSignature, parentSignature, font = '
       margins: { top: 1700, right: 720, bottom: 720, left: 720, header: 360 }
     });
 
-    return docxBuffer;
+    return suppressHeaderTableBorders(docxBuffer);
   } catch (err) {
     logger.error({ err }, 'DOCX generation failed');
     throw err;
