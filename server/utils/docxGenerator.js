@@ -20,13 +20,9 @@ function buildCss(fontKey) {
   table { border-collapse: collapse; width: 100%; }
   th { background-color: #5B2C8E; color: #FFFFFF; padding: 6px 10px; text-align: left; font-weight: bold; font-size: 10pt; }
   td { padding: 5px 10px; font-size: 10pt; }
-  .header-table { border: 0; border-collapse: collapse; }
-  .header-table tr { border: 0; }
-  .header-table td { border: 0; padding: 2px 6px; vertical-align: middle; }
-  .header-table .header-left { text-align: left; font-size: 9pt; color: #555555; }
-  .header-table .header-right { text-align: right; font-size: 9pt; color: #555555; }
-  .header-table .header-center { text-align: center; }
-  .header-table .clinic-sub { font-size: 8pt; color: #888888; }
+  .hp-logo { text-align: center; margin: 0; }
+  .hp-sub { text-align: center; font-size: 9pt; color: #888888; margin: 0; }
+  .hp-info { text-align: center; font-size: 9pt; color: #555555; margin: 0; }
   ul { margin-left: 20px; }
   .clinic-logo { max-height: 60px; }
   .hygiene-image img { max-width: 240px; }
@@ -40,9 +36,12 @@ function buildCss(fontKey) {
 
 // Split the report HTML into:
 //   - body: everything except the .header block
-//   - header: a 3-column table that becomes the Word page header (repeats on every page)
-// IMPORTANT: no inline styles on td elements — that crashes html-to-docx with
-// "Invalid XML name: @w". Column widths set via the html `width` attribute.
+//   - header: clinic logo + subtitle + contact line, stacked and centered
+//
+// We avoid <table> in the page header because html-to-docx forces visible
+// borders on every table and ignores HTML border / CSS overrides. A stacked
+// layout has no borders to fight with and matches the client's reference doc:
+// logo → clinic name → address+contact line.
 function splitHeader(htmlBody) {
   const re = /<div class="header">\s*<div class="header-left">([\s\S]*?)<\/div>\s*<div class="header-center">([\s\S]*?)<\/div>\s*<div class="header-right">([\s\S]*?)<\/div>\s*<\/div>/;
   const match = htmlBody.match(re);
@@ -51,14 +50,20 @@ function splitHeader(htmlBody) {
   }
   const [, left, center, right] = match;
   const body = htmlBody.replace(re, '');
+
+  // Strip any nested <p>/<h*> from the center block so we can re-wrap it cleanly.
+  const cleanCenter = center
+    .replace(/<h1[^>]*>[\s\S]*?<\/h1>/g, '')
+    .replace(/<p[^>]*>([\s\S]*?)<\/p>/g, '$1');
+
+  const inlineFromBlock = (s) => s.replace(/<br\s*\/?>/gi, ' • ').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  const addressLine = inlineFromBlock(left);
+  const contactLine = inlineFromBlock(right);
+
   const header = `
-    <table class="header-table" border="0" cellspacing="0" cellpadding="0">
-      <tr>
-        <td width="33%" class="header-left">${left}</td>
-        <td width="34%" class="header-center">${center}</td>
-        <td width="33%" class="header-right">${right}</td>
-      </tr>
-    </table>
+    <p class="hp-logo">${cleanCenter.trim()}</p>
+    <p class="hp-sub">Neuro-Cognitive Rehabilitation Clinic</p>
+    <p class="hp-info">${addressLine} &nbsp;|&nbsp; ${contactLine}</p>
   `;
   return { body, header };
 }
