@@ -31,18 +31,16 @@ function buildCss(fontKey) {
   `;
 }
 
-// Replace the flexbox-based header with a plain table layout that Word renders cleanly.
+// html-to-docx ignores flexbox and is fragile with inline styles on table cells,
+// so we just stack the three header sections vertically. The clinic logo + name
+// remain prominently centered; address and contact info follow as plain blocks.
 function adaptHtmlForDocx(htmlBody) {
-  // html-to-docx ignores flexbox; convert the .header div into a 3-column table
-  // so left address / center logo / right contact stay side-by-side in Word.
   return htmlBody.replace(
     /<div class="header">\s*<div class="header-left">([\s\S]*?)<\/div>\s*<div class="header-center">([\s\S]*?)<\/div>\s*<div class="header-right">([\s\S]*?)<\/div>\s*<\/div>/,
     (_, left, center, right) => `
-      <table style="width:100%; border:none;"><tr>
-        <td style="width:33%; vertical-align:top; text-align:left; border:none;">${left}</td>
-        <td style="width:34%; vertical-align:top; text-align:center; border:none;">${center}</td>
-        <td style="width:33%; vertical-align:top; text-align:right; border:none;">${right}</td>
-      </tr></table>
+      <div class="header-center" style="text-align:center;">${center}</div>
+      <p style="text-align:center; font-size:9pt; color:#555555;">${left.replace(/<br\s*\/?>/g, ' • ')}</p>
+      <p style="text-align:center; font-size:9pt; color:#555555;">${right.replace(/<br\s*\/?>/g, ' • ')}</p>
     `
   );
 }
