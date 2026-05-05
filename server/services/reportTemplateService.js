@@ -438,7 +438,7 @@ function headerBlock(patient, evaluation, lang) {
   // Explicit width attribute is needed because Word ignores CSS sizing on images.
   // Puppeteer (PDF) still respects the .clinic-logo max-height rule for a tighter render.
   const logoHtml = LOGO_DATA_URI
-    ? `<img class="clinic-logo" src="${LOGO_DATA_URI}" alt="Neuronita" width="90" />`
+    ? `<img class="clinic-logo" src="${LOGO_DATA_URI}" alt="Neuronita" width="70" />`
     : `<h1 class="clinic-name">NEURONITA</h1>`;
   return `
     <div class="header">
@@ -465,15 +465,13 @@ function patientInfoBlock(patient, evaluation, lang) {
   const t = L(lang);
   const age = calculateAge(patient.dateOfBirth);
   return `
-    <div class="section">
-      <table class="info-table">
-        <tr><td><strong>${t.patient}:</strong></td><td>${patient.firstName} ${patient.lastName}</td></tr>
-        <tr><td><strong>${t.evaluationDate}:</strong></td><td>${formatDate(evaluation.evaluationDate, lang)}</td></tr>
-        <tr><td><strong>${t.dateOfBirth}:</strong></td><td>${formatDate(patient.dateOfBirth, lang)}</td></tr>
-        <tr><td><strong>${t.chronologicalAge}:</strong></td><td>${t.ageFmt(age.years, age.months)}</td></tr>
-        <tr><td><strong>${t.school}:</strong></td><td>${patient.school || '—'}</td></tr>
-        <tr><td><strong>${t.grade}:</strong></td><td>${patient.grade || '—'}</td></tr>
-      </table>
+    <div class="section patient-info">
+      <p><strong>${t.patient}:</strong> ${patient.firstName} ${patient.lastName}</p>
+      <p><strong>${t.evaluationDate}:</strong> ${formatDate(evaluation.evaluationDate, lang)}</p>
+      <p><strong>${t.dateOfBirth}:</strong> ${formatDate(patient.dateOfBirth, lang)}</p>
+      <p><strong>${t.chronologicalAge}:</strong> ${t.ageFmt(age.years, age.months)}</p>
+      <p><strong>${t.school}:</strong> ${patient.school || '—'}</p>
+      <p><strong>${t.grade}:</strong> ${patient.grade || '—'}</p>
     </div>
   `;
 }
