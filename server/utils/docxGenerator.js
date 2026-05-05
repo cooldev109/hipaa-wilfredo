@@ -20,8 +20,9 @@ function buildCss(fontKey) {
   table { border-collapse: collapse; width: 100%; }
   th { background-color: #5B2C8E; color: #FFFFFF; padding: 6px 10px; text-align: left; font-weight: bold; font-size: 10pt; }
   td { padding: 5px 10px; font-size: 10pt; }
-  .header-table { border-bottom: 2px solid #5B2C8E; }
-  .header-table td { border: none; padding: 4px 8px; vertical-align: middle; }
+  .header-table { border: 0; border-collapse: collapse; }
+  .header-table tr { border: 0; }
+  .header-table td { border: 0; padding: 2px 6px; vertical-align: middle; }
   .header-table .header-left { text-align: left; font-size: 9pt; color: #555555; }
   .header-table .header-right { text-align: right; font-size: 9pt; color: #555555; }
   .header-table .header-center { text-align: center; }
@@ -51,7 +52,7 @@ function splitHeader(htmlBody) {
   const [, left, center, right] = match;
   const body = htmlBody.replace(re, '');
   const header = `
-    <table class="header-table">
+    <table class="header-table" border="0" cellspacing="0" cellpadding="0">
       <tr>
         <td width="33%" class="header-left">${left}</td>
         <td width="34%" class="header-center">${center}</td>
