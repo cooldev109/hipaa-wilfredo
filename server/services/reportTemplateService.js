@@ -438,7 +438,7 @@ function headerBlock(patient, evaluation, lang) {
   // html-to-docx ignores the `width` attribute on <img> but respects inline
   // style="width:Npx" — that's the only reliable way to constrain the rendered size.
   const logoHtml = LOGO_DATA_URI
-    ? `<img class="clinic-logo" src="${LOGO_DATA_URI}" alt="Neuronita" style="width:80px;height:auto;" />`
+    ? `<img class="clinic-logo" src="${LOGO_DATA_URI}" alt="Neuronita" style="width:130px;height:auto;" />`
     : `<h1 class="clinic-name">NEURONITA</h1>`;
   return `
     <div class="header">

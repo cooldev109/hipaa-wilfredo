@@ -36,12 +36,12 @@ function buildCss(fontKey) {
 
 // Split the report HTML into:
 //   - body: everything except the .header block
-//   - header: clinic logo + subtitle + contact line, stacked and centered
+//   - header: 3-column page-header table (address | logo | contact)
 //
-// We avoid <table> in the page header because html-to-docx forces visible
-// borders on every table and ignores HTML border / CSS overrides. A stacked
-// layout has no borders to fight with and matches the client's reference doc:
-// logo → clinic name → address+contact line.
+// Borders are removed by combining `border="0"` on the <table> (suppresses
+// tblBorders) with inline `style="border:none"` on each <td> (suppresses
+// tcBorders). Verified: with both, html-to-docx emits neither border element.
+// Inline `width:%` on td crashes html-to-docx, so cells auto-size by content.
 function splitHeader(htmlBody) {
   const re = /<div class="header">\s*<div class="header-left">([\s\S]*?)<\/div>\s*<div class="header-center">([\s\S]*?)<\/div>\s*<div class="header-right">([\s\S]*?)<\/div>\s*<\/div>/;
   const match = htmlBody.match(re);
@@ -51,19 +51,14 @@ function splitHeader(htmlBody) {
   const [, left, center, right] = match;
   const body = htmlBody.replace(re, '');
 
-  // Strip any nested <p>/<h*> from the center block so we can re-wrap it cleanly.
-  const cleanCenter = center
-    .replace(/<h1[^>]*>[\s\S]*?<\/h1>/g, '')
-    .replace(/<p[^>]*>([\s\S]*?)<\/p>/g, '$1');
-
-  const inlineFromBlock = (s) => s.replace(/<br\s*\/?>/gi, ' • ').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-  const addressLine = inlineFromBlock(left);
-  const contactLine = inlineFromBlock(right);
-
   const header = `
-    <p class="hp-logo">${cleanCenter.trim()}</p>
-    <p class="hp-sub">Neuro-Cognitive Rehabilitation Clinic</p>
-    <p class="hp-info">${addressLine} &nbsp;|&nbsp; ${contactLine}</p>
+    <table border="0">
+      <tr>
+        <td style="border:none">${left}</td>
+        <td style="border:none">${center}</td>
+        <td style="border:none">${right}</td>
+      </tr>
+    </table>
   `;
   return { body, header };
 }
