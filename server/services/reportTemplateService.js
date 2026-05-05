@@ -435,8 +435,10 @@ function L(lang) {
 
 function headerBlock(patient, evaluation, lang) {
   const t = L(lang);
+  // Explicit width attribute is needed because Word ignores CSS sizing on images.
+  // Puppeteer (PDF) still respects the .clinic-logo max-height rule for a tighter render.
   const logoHtml = LOGO_DATA_URI
-    ? `<img class="clinic-logo" src="${LOGO_DATA_URI}" alt="Neuronita" />`
+    ? `<img class="clinic-logo" src="${LOGO_DATA_URI}" alt="Neuronita" width="90" />`
     : `<h1 class="clinic-name">NEURONITA</h1>`;
   return `
     <div class="header">

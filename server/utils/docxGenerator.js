@@ -20,6 +20,10 @@ function buildCss(fontKey) {
   table { border-collapse: collapse; width: 100%; }
   th { background-color: #5B2C8E; color: #FFFFFF; padding: 6px 10px; text-align: left; font-weight: bold; font-size: 10pt; }
   td { padding: 5px 10px; font-size: 10pt; }
+  .header-table td { border: none; padding: 4px 8px; vertical-align: middle; }
+  .header-table .header-left { text-align: left; font-size: 9pt; color: #555555; }
+  .header-table .header-right { text-align: right; font-size: 9pt; color: #555555; }
+  .header-table .header-center { text-align: center; }
   ul { margin-left: 20px; }
   .clinic-logo { max-height: 60px; }
   .hygiene-image img { max-width: 240px; }
@@ -31,16 +35,21 @@ function buildCss(fontKey) {
   `;
 }
 
-// html-to-docx ignores flexbox and is fragile with inline styles on table cells,
-// so we just stack the three header sections vertically. The clinic logo + name
-// remain prominently centered; address and contact info follow as plain blocks.
+// html-to-docx ignores flexbox; replace the .header div with a plain 3-column
+// table so left address / center logo / right contact stay side-by-side in Word.
+// IMPORTANT: no inline styles on td elements — that crashes html-to-docx with
+// "Invalid XML name: @w". Column widths set via the html `width` attribute.
 function adaptHtmlForDocx(htmlBody) {
   return htmlBody.replace(
     /<div class="header">\s*<div class="header-left">([\s\S]*?)<\/div>\s*<div class="header-center">([\s\S]*?)<\/div>\s*<div class="header-right">([\s\S]*?)<\/div>\s*<\/div>/,
     (_, left, center, right) => `
-      <div class="header-center" style="text-align:center;">${center}</div>
-      <p style="text-align:center; font-size:9pt; color:#555555;">${left.replace(/<br\s*\/?>/g, ' • ')}</p>
-      <p style="text-align:center; font-size:9pt; color:#555555;">${right.replace(/<br\s*\/?>/g, ' • ')}</p>
+      <table class="header-table">
+        <tr>
+          <td width="33%" class="header-left">${left}</td>
+          <td width="34%" class="header-center">${center}</td>
+          <td width="33%" class="header-right">${right}</td>
+        </tr>
+      </table>
     `
   );
 }
