@@ -20,10 +20,12 @@ function buildCss(fontKey) {
   table { border-collapse: collapse; width: 100%; }
   th { background-color: #5B2C8E; color: #FFFFFF; padding: 6px 10px; text-align: left; font-weight: bold; font-size: 10pt; }
   td { padding: 5px 10px; font-size: 10pt; }
+  .header-table { border-bottom: 2px solid #5B2C8E; }
   .header-table td { border: none; padding: 4px 8px; vertical-align: middle; }
   .header-table .header-left { text-align: left; font-size: 9pt; color: #555555; }
   .header-table .header-right { text-align: right; font-size: 9pt; color: #555555; }
   .header-table .header-center { text-align: center; }
+  .header-table .clinic-sub { font-size: 8pt; color: #888888; }
   ul { margin-left: 20px; }
   .clinic-logo { max-height: 60px; }
   .hygiene-image img { max-width: 240px; }
@@ -35,57 +37,60 @@ function buildCss(fontKey) {
   `;
 }
 
-// html-to-docx ignores flexbox; replace the .header div with a plain 3-column
-// table so left address / center logo / right contact stay side-by-side in Word.
+// Split the report HTML into:
+//   - body: everything except the .header block
+//   - header: a 3-column table that becomes the Word page header (repeats on every page)
 // IMPORTANT: no inline styles on td elements — that crashes html-to-docx with
 // "Invalid XML name: @w". Column widths set via the html `width` attribute.
-function adaptHtmlForDocx(htmlBody) {
-  return htmlBody.replace(
-    /<div class="header">\s*<div class="header-left">([\s\S]*?)<\/div>\s*<div class="header-center">([\s\S]*?)<\/div>\s*<div class="header-right">([\s\S]*?)<\/div>\s*<\/div>/,
-    (_, left, center, right) => `
-      <table class="header-table">
-        <tr>
-          <td width="33%" class="header-left">${left}</td>
-          <td width="34%" class="header-center">${center}</td>
-          <td width="33%" class="header-right">${right}</td>
-        </tr>
-      </table>
-    `
-  );
+function splitHeader(htmlBody) {
+  const re = /<div class="header">\s*<div class="header-left">([\s\S]*?)<\/div>\s*<div class="header-center">([\s\S]*?)<\/div>\s*<div class="header-right">([\s\S]*?)<\/div>\s*<\/div>/;
+  const match = htmlBody.match(re);
+  if (!match) {
+    return { body: htmlBody, header: null };
+  }
+  const [, left, center, right] = match;
+  const body = htmlBody.replace(re, '');
+  const header = `
+    <table class="header-table">
+      <tr>
+        <td width="33%" class="header-left">${left}</td>
+        <td width="34%" class="header-center">${center}</td>
+        <td width="33%" class="header-right">${right}</td>
+      </tr>
+    </table>
+  `;
+  return { body, header };
 }
 
 async function generateDocx(htmlBody, doctorSignature, parentSignature, font = 'default') {
   try {
-    let finalHtml = adaptHtmlForDocx(htmlBody);
+    let { body, header } = splitHeader(htmlBody);
 
-    // Inject signatures the same way as the PDF generator does
+    // Inject signatures into the body
     if (doctorSignature) {
-      finalHtml = finalHtml.replace(
+      body = body.replace(
         '<div class="signature-line" id="doctor-signature"></div>',
         `<div class="signature-line" id="doctor-signature"><img src="${doctorSignature}" /></div>`
       );
     }
     if (parentSignature) {
-      finalHtml = finalHtml.replace(
+      body = body.replace(
         '<div class="signature-line" id="parent-signature"></div>',
         `<div class="signature-line" id="parent-signature"><img src="${parentSignature}" /></div>`
       );
     }
 
-    const fullHtml = `
-      <!DOCTYPE html>
-      <html>
-        <head><meta charset="utf-8"><style>${buildCss(font)}</style></head>
-        <body>${finalHtml}</body>
-      </html>
-    `;
+    const css = buildCss(font);
+    const wrap = (inner) => `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${css}</style></head><body>${inner}</body></html>`;
 
-    const docxBuffer = await HTMLtoDOCX(fullHtml, null, {
+    const docxBuffer = await HTMLtoDOCX(wrap(body), header ? wrap(header) : null, {
       table: { row: { cantSplit: true } },
+      header: !!header,
       footer: false,
       pageNumber: false,
       orientation: 'portrait',
-      margins: { top: 720, right: 720, bottom: 720, left: 720 } // 0.5"
+      // Top margin includes space reserved for the page header (the 3-col table + a divider)
+      margins: { top: 1700, right: 720, bottom: 720, left: 720, header: 360 }
     });
 
     return docxBuffer;
