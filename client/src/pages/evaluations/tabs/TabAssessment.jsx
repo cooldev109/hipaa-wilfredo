@@ -1,6 +1,7 @@
 import PrescriptionInput from '../../../components/forms/PrescriptionInput';
 import DiagnosisSelector from '../../../components/forms/DiagnosisSelector';
 import ClinicalSelect from '../../../components/forms/ClinicalSelect';
+import VoiceRecorderButton from '../../../components/forms/VoiceRecorderButton';
 import { RECOMMENDATION_OPTIONS, LENS_TYPE_OPTIONS } from '../../../utils/clinicalOptions';
 
 export default function TabAssessment({ data, onChange, language }) {
@@ -13,7 +14,14 @@ export default function TabAssessment({ data, onChange, language }) {
     <div>
       {/* Assessment */}
       <div style={sectionStyle}>
-        <h3 style={h3Style}>ASSESSMENT</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <h3 style={{ ...h3Style, marginBottom: 0, paddingBottom: 0, border: 'none' }}>ASSESSMENT</h3>
+          <VoiceRecorderButton
+            lang="es"
+            existingValue={data.assessmentNotes || ''}
+            onResult={(text) => onChange('assessmentNotes', text)}
+          />
+        </div>
         <textarea
           value={data.assessmentNotes || ''}
           onChange={(e) => onChange('assessmentNotes', e.target.value)}
@@ -120,7 +128,14 @@ export default function TabAssessment({ data, onChange, language }) {
         )}
 
         <div>
-          <label style={labelStyle}>Additional notes</label>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+            <label style={labelStyle}>Additional notes</label>
+            <VoiceRecorderButton
+              lang="es"
+              existingValue={data.recommendationNotes || ''}
+              onResult={(text) => onChange('recommendationNotes', text)}
+            />
+          </div>
           <textarea
             value={data.recommendationNotes || ''}
             onChange={(e) => onChange('recommendationNotes', e.target.value)}

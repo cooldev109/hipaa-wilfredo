@@ -1,4 +1,5 @@
 import ClinicalSelect from '../../../components/forms/ClinicalSelect';
+import VoiceRecorderButton from '../../../components/forms/VoiceRecorderButton';
 import { VA_OPTIONS, COLOR_VISION_OPTIONS, STEREO_OPTIONS, COVER_TEST_OPTIONS } from '../../../utils/clinicalOptions';
 
 export default function TabVisualAcuity({ data, onChange }) {
@@ -60,7 +61,14 @@ export default function TabVisualAcuity({ data, onChange }) {
     <div>
       {/* Reason for Visit */}
       <div style={sectionStyle}>
-        <h3 style={h3Style}>REASON FOR VISIT / RAZÓN DE LA VISITA</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <h3 style={{ ...h3Style, marginBottom: 0, paddingBottom: 0, border: 'none' }}>REASON FOR VISIT / RAZÓN DE LA VISITA</h3>
+          <VoiceRecorderButton
+            lang="es"
+            existingValue={data.reasonForVisit || ''}
+            onResult={(text) => onChange('reasonForVisit', text)}
+          />
+        </div>
         <textarea
           value={data.reasonForVisit || ''}
           onChange={(e) => onChange('reasonForVisit', e.target.value)}

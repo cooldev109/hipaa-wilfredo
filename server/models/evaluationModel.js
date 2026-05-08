@@ -59,7 +59,7 @@ const EVALUATION_FIELDS = [
   'vp_raw_score', 'vp_chronological_age', 'vp_perceptual_age', 'vp_standard_score', 'vp_percentile',
   // Assessment
   'assessment_notes', 'diagnoses', 'plan_rx_od', 'plan_rx_os', 'plan_rx_add', 'recommendations',
-  'plan_rx_lens_type'
+  'plan_rx_lens_type', 'recommendation_notes', 're_evaluation_months'
 ];
 
 /**
