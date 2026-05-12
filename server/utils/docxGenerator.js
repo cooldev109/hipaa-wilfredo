@@ -3,9 +3,12 @@ const JSZip = require('jszip');
 const logger = require('./logger');
 
 // Replace empty <tblBorders/> / <tcBorders/> with explicit "nil" border specs
-// so Word doesn't fall back to its default thin gridlines on the header table.
-const NIL_TBL_BORDERS = '<tblBorders><top val="nil"/><left val="nil"/><bottom val="nil"/><right val="nil"/><insideH val="nil"/><insideV val="nil"/></tblBorders>';
-const NIL_TC_BORDERS = '<tcBorders><top val="nil"/><left val="nil"/><bottom val="nil"/><right val="nil"/></tcBorders>';
+// using properly-namespaced attributes (w:val). Unqualified attributes work in
+// WPS Office but cause MS Word to refuse to open the file with a generic error.
+// We declare xmlns:w on each replacement node so the w: prefix is bound locally.
+const W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+const NIL_TBL_BORDERS = `<tblBorders xmlns:w="${W_NS}"><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/><w:insideH w:val="nil"/><w:insideV w:val="nil"/></tblBorders>`;
+const NIL_TC_BORDERS = `<tcBorders xmlns:w="${W_NS}"><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/></tcBorders>`;
 
 async function suppressHeaderTableBorders(buffer) {
   const zip = await JSZip.loadAsync(buffer);
