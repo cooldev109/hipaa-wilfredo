@@ -2,30 +2,66 @@ const HTMLtoDOCX = require('html-to-docx');
 const JSZip = require('jszip');
 const logger = require('./logger');
 
-// Replace empty <tblBorders/> / <tcBorders/> with explicit "nil" border specs
-// using properly-namespaced attributes (w:val). Unqualified attributes work in
-// WPS Office but cause MS Word to refuse to open the file with a generic error.
-// We declare xmlns:w on each replacement node so the w: prefix is bound locally.
-const W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
-const NIL_TBL_BORDERS = `<tblBorders xmlns:w="${W_NS}"><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/><w:insideH w:val="nil"/><w:insideV w:val="nil"/></tblBorders>`;
-const NIL_TC_BORDERS = `<tcBorders xmlns:w="${W_NS}"><w:top w:val="nil"/><w:left w:val="nil"/><w:bottom w:val="nil"/><w:right w:val="nil"/></tcBorders>`;
-
-async function suppressHeaderTableBorders(buffer) {
+// html-to-docx duplicates inline images (creates one media file per image
+// occurrence, plus an extra orphan) and declares relationships for all of
+// them — even unreferenced copies. MS Word rejects files with dangling
+// relationships ("Word experienced an error trying to open the file").
+// This pass scans each part's .rels file, finds image relationships whose
+// rId is not referenced by the corresponding part, and removes both the rel
+// entry and the media file.
+async function removeOrphanImages(buffer) {
   const zip = await JSZip.loadAsync(buffer);
-  const headerEntry = zip.file('word/header1.xml');
-  if (!headerEntry) return buffer;
-  let xml = await headerEntry.async('string');
-  let touched = false;
-  if (xml.includes('<tblBorders/>')) {
-    xml = xml.replace('<tblBorders/>', NIL_TBL_BORDERS);
-    touched = true;
+
+  const partsToCheck = [
+    { part: 'word/document.xml', rels: 'word/_rels/document.xml.rels' },
+    { part: 'word/header1.xml', rels: 'word/_rels/header1.xml.rels' },
+    { part: 'word/footer1.xml', rels: 'word/_rels/footer1.xml.rels' }
+  ];
+
+  const mediaToDelete = new Set();
+  let changed = false;
+
+  for (const { part, rels } of partsToCheck) {
+    const partEntry = zip.file(part);
+    const relsEntry = zip.file(rels);
+    if (!partEntry || !relsEntry) continue;
+
+    const partXml = await partEntry.async('string');
+    let relsXml = await relsEntry.async('string');
+
+    // Match image relationships: <Relationship Id="rIdN" Type=".../image" Target="media/xxx.png".../>
+    const relRe = /<Relationship\s+Id="(rId\d+)"\s+Type="[^"]*\/image"\s+Target="([^"]+)"[^/]*\/>/g;
+    let m, anyChanged = false;
+    while ((m = relRe.exec(relsXml)) !== null) {
+      const [full, rId, target] = m;
+      // Is this rId referenced anywhere in the part XML? html-to-docx uses
+      // ns-prefixed attributes like ns19:embed="rId2", so a substring match
+      // for `"rId2"` is sufficient.
+      if (!partXml.includes(`"${rId}"`)) {
+        relsXml = relsXml.replace(full, '');
+        anyChanged = true;
+        // Resolve to absolute zip path: relsTarget is relative to the part's folder
+        const partFolder = part.replace(/\/[^/]+$/, '');
+        const mediaPath = target.startsWith('/') ? target.slice(1) : `${partFolder}/${target}`;
+        mediaToDelete.add(mediaPath);
+      }
+    }
+    if (anyChanged) {
+      // collapse blank lines left behind by removed Relationship elements
+      relsXml = relsXml.replace(/\n\s*\n/g, '\n');
+      zip.file(rels, relsXml);
+      changed = true;
+    }
   }
-  if (xml.includes('<tcBorders/>')) {
-    xml = xml.replace(/<tcBorders\/>/g, NIL_TC_BORDERS);
-    touched = true;
+
+  for (const m of mediaToDelete) {
+    if (zip.file(m)) {
+      zip.remove(m);
+      changed = true;
+    }
   }
-  if (!touched) return buffer;
-  zip.file('word/header1.xml', xml);
+
+  if (!changed) return buffer;
   return zip.generateAsync({ type: 'nodebuffer' });
 }
 
@@ -122,7 +158,7 @@ async function generateDocx(htmlBody, doctorSignature, parentSignature, font = '
       margins: { top: 1700, right: 720, bottom: 720, left: 720, header: 360 }
     });
 
-    return suppressHeaderTableBorders(docxBuffer);
+    return removeOrphanImages(docxBuffer);
   } catch (err) {
     logger.error({ err }, 'DOCX generation failed');
     throw err;
