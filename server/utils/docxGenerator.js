@@ -154,8 +154,11 @@ async function generateDocx(htmlBody, doctorSignature, parentSignature, font = '
       footer: false,
       pageNumber: false,
       orientation: 'portrait',
-      // Top margin includes space reserved for the page header (the 3-col table + a divider)
-      margins: { top: 1700, right: 720, bottom: 720, left: 720, header: 360 }
+      // Top margin includes space reserved for the page header (the 3-col table + a divider).
+      // IMPORTANT: footer and gutter must be explicit integers; if omitted,
+      // html-to-docx serializes them as the literal string "undefined" which
+      // makes MS Word refuse to open the file.
+      margins: { top: 1700, right: 720, bottom: 720, left: 720, header: 360, footer: 720, gutter: 0 }
     });
 
     return removeOrphanImages(docxBuffer);
