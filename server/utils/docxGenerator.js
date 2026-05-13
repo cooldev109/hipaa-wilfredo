@@ -65,6 +65,31 @@ async function removeOrphanImages(buffer) {
   return zip.generateAsync({ type: 'nodebuffer' });
 }
 
+// OOXML schema requires <w:sectPr> to be the LAST child of <w:body>, but
+// html-to-docx emits it as the FIRST child. MS Word's strict validator
+// refuses to open files with this ordering ("Word experienced an error
+// trying to open the file"). Mammoth and other lenient parsers accept it.
+// We move the block from the start of <w:body> to just before </w:body>.
+async function moveSectPrToEndOfBody(buffer) {
+  const zip = await JSZip.loadAsync(buffer);
+  const docEntry = zip.file('word/document.xml');
+  if (!docEntry) return buffer;
+  let xml = await docEntry.async('string');
+
+  const bodyOpenRe = /<w:body>\s*(<w:sectPr>[\s\S]*?<\/w:sectPr>)\s*/;
+  const m = xml.match(bodyOpenRe);
+  if (!m) return buffer; // sectPr not at start — nothing to move
+
+  const sectPr = m[1];
+  // Remove the misplaced sectPr (and the whitespace right after <w:body>)
+  xml = xml.replace(bodyOpenRe, '<w:body>');
+  // Inject it just before </w:body>
+  xml = xml.replace(/<\/w:body>/, `${sectPr}</w:body>`);
+
+  zip.file('word/document.xml', xml);
+  return zip.generateAsync({ type: 'nodebuffer' });
+}
+
 const FONT_FAMILY = {
   default: 'Calibri',
   inter: 'Calibri'
@@ -161,7 +186,9 @@ async function generateDocx(htmlBody, doctorSignature, parentSignature, font = '
       margins: { top: 1700, right: 720, bottom: 720, left: 720, header: 360, footer: 720, gutter: 0 }
     });
 
-    return removeOrphanImages(docxBuffer);
+    let processed = await removeOrphanImages(docxBuffer);
+    processed = await moveSectPrToEndOfBody(processed);
+    return processed;
   } catch (err) {
     logger.error({ err }, 'DOCX generation failed');
     throw err;
