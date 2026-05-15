@@ -31,10 +31,25 @@ function arg(flag) {
   return i > -1 ? process.argv[i + 1] : null;
 }
 const CONFIRM = process.argv.includes('--confirm');
+const LIST_ONLY = process.argv.includes('--list');
 const KEEP_ID = arg('--keep');
 const KEEP_NAME = (arg('--keep-name') || 'Emma').trim();
 
 (async () => {
+  if (LIST_ONLY) {
+    const rows = (await pool.query(
+      'SELECT id, first_name_encrypted, last_name_encrypted, created_at FROM patients WHERE deleted_at IS NULL ORDER BY created_at'
+    )).rows;
+    console.log(`Patients in DB (${rows.length}):`);
+    for (const p of rows) {
+      let first = '?', last = '?';
+      try { first = decrypt(p.first_name_encrypted) || '?'; } catch { /* ignore */ }
+      try { last = decrypt(p.last_name_encrypted) || '?'; } catch { /* ignore */ }
+      console.log(`  ${p.id}  ${first} ${last}`);
+    }
+    await pool.end();
+    return;
+  }
   console.log(CONFIRM ? '=== CLEANUP (live) ===' : '=== CLEANUP (dry-run) ===');
   console.log();
 
