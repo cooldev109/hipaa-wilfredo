@@ -37,26 +37,45 @@ const KEEP_NAME = (arg('--keep-name') || 'Emma').trim();
 
 (async () => {
   if (LIST_ONLY) {
-    const rows = (await pool.query(
-      'SELECT id, first_name_encrypted, last_name_encrypted, created_at FROM patients WHERE deleted_at IS NULL ORDER BY created_at'
-    )).rows;
+    // Show ALL patients, including soft-deleted ones, plus how many reports
+    // each has — needed because the UI still surfaces reports for soft-deleted
+    // patients.
+    const rows = (await pool.query(`
+      SELECT p.id, p.first_name_encrypted, p.last_name_encrypted, p.deleted_at,
+             (SELECT COUNT(*)::int FROM evaluations e WHERE e.patient_id = p.id) AS evals,
+             (SELECT COUNT(*)::int FROM reports r WHERE r.patient_id = p.id) AS reports
+      FROM patients p
+      ORDER BY p.created_at
+    `)).rows;
     console.log(`Patients in DB (${rows.length}):`);
     for (const p of rows) {
       let first = '?', last = '?';
       try { first = decrypt(p.first_name_encrypted) || '?'; } catch { /* ignore */ }
       try { last = decrypt(p.last_name_encrypted) || '?'; } catch { /* ignore */ }
-      console.log(`  ${p.id}  ${first} ${last}`);
+      const tag = p.deleted_at ? ' [SOFT-DELETED]' : '';
+      console.log(`  ${p.id}  ${first} ${last}  evals=${p.evals} reports=${p.reports}${tag}`);
     }
+    console.log();
+    console.log('Orphan reports (no patient row):');
+    const orphans = (await pool.query(`
+      SELECT r.patient_id, COUNT(*)::int AS n
+      FROM reports r
+      WHERE NOT EXISTS (SELECT 1 FROM patients p WHERE p.id = r.patient_id)
+      GROUP BY r.patient_id
+    `)).rows;
+    if (orphans.length === 0) console.log('  none');
+    else orphans.forEach((o) => console.log(`  patient_id=${o.patient_id}  ${o.n} reports`));
     await pool.end();
     return;
   }
   console.log(CONFIRM ? '=== CLEANUP (live) ===' : '=== CLEANUP (dry-run) ===');
   console.log();
 
-  // 1) Resolve the patient to keep
+  // 1) Resolve the patient to keep. If --wipe-all, we keep no patient.
+  const WIPE_ALL = process.argv.includes('--wipe-all');
   let keepId = KEEP_ID;
-  if (!keepId) {
-    const rows = (await pool.query('SELECT id, first_name_encrypted, last_name_encrypted FROM patients WHERE deleted_at IS NULL')).rows;
+  if (!WIPE_ALL && !keepId) {
+    const rows = (await pool.query('SELECT id, first_name_encrypted, last_name_encrypted FROM patients')).rows;
     for (const p of rows) {
       try {
         const first = decrypt(p.first_name_encrypted) || '';
@@ -69,18 +88,26 @@ const KEEP_NAME = (arg('--keep-name') || 'Emma').trim();
       } catch { /* ignore decryption failures */ }
     }
   }
-  if (!keepId) {
-    console.error(`ERROR: no patient matched --keep-name "${KEEP_NAME}". Use --keep <uuid> to specify a patient ID directly.`);
+  if (!WIPE_ALL && !keepId) {
+    console.error(`ERROR: no patient matched --keep-name "${KEEP_NAME}". Use --keep <uuid>, or --wipe-all to delete everything.`);
     await pool.end();
     process.exit(1);
   }
+  if (WIPE_ALL) console.log('WIPE-ALL mode: every patient + their evaluations + reports will be deleted.');
+
+  // Build a WHERE clause that matches "everything except keepId" or, in wipe-all
+  // mode, simply "TRUE" (i.e. everything).
+  const whereClause = keepId ? 'patient_id != $1' : 'TRUE';
+  const whereParams = keepId ? [keepId] : [];
+  const patientsWhere = keepId ? 'id != $1' : 'TRUE';
+  const patientsParams = keepId ? [keepId] : [];
 
   // 2) Count what would be deleted
   const counts = {
-    patients: (await pool.query('SELECT COUNT(*)::int AS n FROM patients WHERE id != $1', [keepId])).rows[0].n,
-    history: (await pool.query('SELECT COUNT(*)::int AS n FROM patient_history WHERE patient_id != $1', [keepId])).rows[0].n,
-    evaluations: (await pool.query('SELECT COUNT(*)::int AS n FROM evaluations WHERE patient_id != $1', [keepId])).rows[0].n,
-    reports: (await pool.query('SELECT COUNT(*)::int AS n FROM reports WHERE patient_id != $1', [keepId])).rows[0].n
+    patients: (await pool.query(`SELECT COUNT(*)::int AS n FROM patients WHERE ${patientsWhere}`, patientsParams)).rows[0].n,
+    history: (await pool.query(`SELECT COUNT(*)::int AS n FROM patient_history WHERE ${whereClause}`, whereParams)).rows[0].n,
+    evaluations: (await pool.query(`SELECT COUNT(*)::int AS n FROM evaluations WHERE ${whereClause}`, whereParams)).rows[0].n,
+    reports: (await pool.query(`SELECT COUNT(*)::int AS n FROM reports WHERE ${whereClause}`, whereParams)).rows[0].n
   };
 
   console.log();
@@ -95,8 +122,8 @@ const KEEP_NAME = (arg('--keep-name') || 'Emma').trim();
   )).rows.map((r) => r.column_name);
   const pathCols = cols.join(', ') || "''::text AS pdf_file_path";
   const fileRows = (await pool.query(
-    `SELECT ${pathCols} FROM reports WHERE patient_id != $1`,
-    [keepId]
+    `SELECT ${pathCols} FROM reports WHERE ${whereClause}`,
+    whereParams
   )).rows;
   const filesToDelete = [];
   for (const r of fileRows) {
@@ -119,10 +146,10 @@ const KEEP_NAME = (arg('--keep-name') || 'Emma').trim();
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const r1 = await client.query('DELETE FROM reports WHERE patient_id != $1', [keepId]);
-    const r2 = await client.query('DELETE FROM evaluations WHERE patient_id != $1', [keepId]);
-    const r3 = await client.query('DELETE FROM patient_history WHERE patient_id != $1', [keepId]);
-    const r4 = await client.query('DELETE FROM patients WHERE id != $1', [keepId]);
+    const r1 = await client.query(`DELETE FROM reports WHERE ${whereClause}`, whereParams);
+    const r2 = await client.query(`DELETE FROM evaluations WHERE ${whereClause}`, whereParams);
+    const r3 = await client.query(`DELETE FROM patient_history WHERE ${whereClause}`, whereParams);
+    const r4 = await client.query(`DELETE FROM patients WHERE ${patientsWhere}`, patientsParams);
     await client.query('COMMIT');
     console.log(`  reports        ${r1.rowCount}`);
     console.log(`  evaluations    ${r2.rowCount}`);
