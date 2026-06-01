@@ -82,9 +82,11 @@ const LOGO_WIDTH_EMU = 2667000;
 const LOGO_HEIGHT_EMU = 1905000;
 
 function buildCleanHeaderXml(imageRid) {
-  // Each line is a paragraph with three tab stops: center @ 4680, right @ 9360.
-  // 9360 twips = 6.5" — fits within a 8.5" page with 1" margins.
-  const tabStops = `<w:pPr><w:tabs><w:tab w:val="center" w:pos="4680"/><w:tab w:val="right" w:pos="9360"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr></w:pPr>`;
+  // Each line is a paragraph with two tab stops: center @ 3600, right @ 8280.
+  // The inline logo extends rightward from the center stop, so the stops are
+  // nudged ~0.75" left of geometric center to keep the logo + contact column
+  // visually balanced against the left-flush address column.
+  const tabStops = `<w:pPr><w:tabs><w:tab w:val="center" w:pos="3600"/><w:tab w:val="right" w:pos="8280"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr></w:pPr>`;
   const rPr = `<w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="555555"/></w:rPr>`;
 
   // Inline drawing for the logo — used in the center column of line 1.
