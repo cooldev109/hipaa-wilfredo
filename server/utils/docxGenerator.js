@@ -65,6 +65,86 @@ async function removeOrphanImages(buffer) {
   return zip.generateAsync({ type: 'nodebuffer' });
 }
 
+// Replace html-to-docx's table-based header with a clean tab-stop layout that
+// mirrors the client's reference DOCX:
+//   line 1: Aquamarina 10              [logo]            Tel. 787-407-4814
+//   line 2: Urb. Villa Blanca                            Fax. 787-258-8225
+//   line 3: Caguas PR 00725                              clinicarehabilitacion10@gmail.com
+// The logo is inline in the center column (using the existing image
+// relationship html-to-docx already created). Tab stops control alignment so
+// the layout is identical to a hand-built Word header — no table borders,
+// no cell artifacts.
+//
+// EMU conversions used for image dimensions (1 px @ 96 DPI = 9525 EMU):
+//   280 px ≈ 2667000 EMU wide   (2x the previous 140 px)
+//   200 px ≈ 1905000 EMU tall   (2x the previous 100 px; logo is roughly 1.4:1)
+const LOGO_WIDTH_EMU = 2667000;
+const LOGO_HEIGHT_EMU = 1905000;
+
+function buildCleanHeaderXml(imageRid) {
+  // Each line is a paragraph with three tab stops: center @ 4680, right @ 9360.
+  // 9360 twips = 6.5" — fits within a 8.5" page with 1" margins.
+  const tabStops = `<w:pPr><w:tabs><w:tab w:val="center" w:pos="4680"/><w:tab w:val="right" w:pos="9360"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr></w:pPr>`;
+  const rPr = `<w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="555555"/></w:rPr>`;
+
+  // Inline drawing for the logo — used in the center column of line 1.
+  const drawing = imageRid ? `<w:r><w:rPr><w:noProof/></w:rPr><w:drawing>
+    <wp:inline distT="0" distB="0" distL="0" distR="0" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing">
+      <wp:extent cx="${LOGO_WIDTH_EMU}" cy="${LOGO_HEIGHT_EMU}"/>
+      <wp:effectExtent l="0" t="0" r="0" b="0"/>
+      <wp:docPr id="1" name="Neuronita logo"/>
+      <wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr>
+      <a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+        <a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">
+          <pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">
+            <pic:nvPicPr><pic:cNvPr id="0" name="logo"/><pic:cNvPicPr/></pic:nvPicPr>
+            <pic:blipFill>
+              <a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="${imageRid}"/>
+              <a:stretch><a:fillRect/></a:stretch>
+            </pic:blipFill>
+            <pic:spPr>
+              <a:xfrm><a:off x="0" y="0"/><a:ext cx="${LOGO_WIDTH_EMU}" cy="${LOGO_HEIGHT_EMU}"/></a:xfrm>
+              <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+            </pic:spPr>
+          </pic:pic>
+        </a:graphicData>
+      </a:graphic>
+    </wp:inline>
+  </w:drawing></w:r>` : '';
+
+  // Line 1: Aquamarina 10  →[tab]→ logo  →[tab]→ Tel.
+  const line1 = `<w:p>${tabStops}<w:r>${rPr}<w:t xml:space="preserve">Aquamarina 10</w:t></w:r><w:r>${rPr}<w:tab/></w:r>${drawing}<w:r>${rPr}<w:tab/><w:t xml:space="preserve">Tel. 787-407-4814</w:t></w:r></w:p>`;
+  // Line 2: Urb. Villa Blanca  →[tab]→  →[tab]→ Fax.
+  const line2 = `<w:p>${tabStops}<w:r>${rPr}<w:t xml:space="preserve">Urb. Villa Blanca</w:t></w:r><w:r>${rPr}<w:tab/></w:r><w:r>${rPr}<w:tab/><w:t xml:space="preserve">Fax. 787-258-8225</w:t></w:r></w:p>`;
+  // Line 3: Caguas PR 00725  →[tab]→  →[tab]→ email
+  const line3 = `<w:p>${tabStops}<w:r>${rPr}<w:t xml:space="preserve">Caguas PR 00725</w:t></w:r><w:r>${rPr}<w:tab/></w:r><w:r>${rPr}<w:tab/><w:t xml:space="preserve">clinicarehabilitacion10@gmail.com</w:t></w:r></w:p>`;
+  // Line 4 (optional): centered subtitle below the logo
+  const subtitle = `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="16"/><w:szCs w:val="16"/><w:color w:val="888888"/></w:rPr><w:t>Neuro-Cognitive Rehabilitation Clinic</w:t></w:r></w:p>`;
+
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:hdr xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">
+${line1}
+${line2}
+${line3}
+${subtitle}
+</w:hdr>`;
+}
+
+async function rebuildHeaderWithTabStops(buffer) {
+  const zip = await JSZip.loadAsync(buffer);
+  const relsEntry = zip.file('word/_rels/header1.xml.rels');
+  const headerEntry = zip.file('word/header1.xml');
+  if (!headerEntry || !relsEntry) return buffer;
+
+  // Pull the image rId from the existing rels (orphan cleanup left exactly one).
+  const relsXml = await relsEntry.async('string');
+  const imageMatch = relsXml.match(/<Relationship\s+Id="(rId\d+)"\s+Type="[^"]*\/image"/);
+  const imageRid = imageMatch ? imageMatch[1] : null;
+
+  zip.file('word/header1.xml', buildCleanHeaderXml(imageRid));
+  return zip.generateAsync({ type: 'nodebuffer' });
+}
+
 // OOXML schema requires <w:sectPr> to be the LAST child of <w:body>, but
 // html-to-docx emits it as the FIRST child. MS Word's strict validator
 // refuses to open files with this ordering ("Word experienced an error
@@ -113,7 +193,7 @@ function buildCss(fontKey) {
   .hp-sub { text-align: center; font-size: 9pt; color: #888888; margin: 0; }
   .hp-info { text-align: center; font-size: 9pt; color: #555555; margin: 0; }
   ul { margin-left: 20px; }
-  .clinic-logo { max-height: 60px; }
+  .clinic-logo { max-height: 120px; }
   .hygiene-image img { max-width: 240px; }
   .header-left, .header-right { font-size: 9pt; color: #555555; }
   .header-center { text-align: center; }
@@ -187,6 +267,7 @@ async function generateDocx(htmlBody, doctorSignature, parentSignature, font = '
     });
 
     let processed = await removeOrphanImages(docxBuffer);
+    processed = await rebuildHeaderWithTabStops(processed);
     processed = await moveSectPrToEndOfBody(processed);
     return processed;
   } catch (err) {

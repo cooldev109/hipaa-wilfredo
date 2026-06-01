@@ -30,17 +30,17 @@ function buildCss(fontKey) {
   .header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     border-bottom: 2px solid #5B2C8E;
     padding-bottom: 10px;
     margin-bottom: 15px;
   }
 
-  .header-left, .header-right { font-size: 9pt; color: #555; }
+  .header-left, .header-right { font-size: 9pt; color: #555; padding-top: 4px; }
   .header-right { text-align: right; }
 
   .header-center { text-align: center; }
-  .clinic-logo { max-height: 60px; width: auto; display: block; margin: 0 auto 4px; }
+  .clinic-logo { max-height: 120px; width: auto; display: block; margin: 0 auto 4px; }
   .hygiene-image { text-align: center; margin: 8px 0; page-break-inside: avoid; }
   .hygiene-image img { max-width: 240px; height: auto; }
   .clinic-name { font-size: 18pt; color: #5B2C8E; margin: 0; letter-spacing: 2px; }
