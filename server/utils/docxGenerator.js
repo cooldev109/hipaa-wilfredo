@@ -82,13 +82,8 @@ const LOGO_WIDTH_EMU = 2667000;
 const LOGO_HEIGHT_EMU = 1905000;
 
 function buildCleanHeaderXml(imageRid) {
-  // Each line is a paragraph with two tab stops: center @ 5400, right @ 10800.
-  // It's a CENTER tab, so the inline logo is centered ON the stop — 5400 twips
-  // is the geometric center of the 10800-twip content area (7.5" between the
-  // 0.5" margins), putting the logo dead-center. The right stop sits at the
-  // content's right edge so the contact column is flush-right, balancing the
-  // flush-left address column.
-  const tabStops = `<w:pPr><w:tabs><w:tab w:val="center" w:pos="5400"/><w:tab w:val="right" w:pos="10800"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr></w:pPr>`;
+  // Header is a borderless 3-column table (address | logo+subtitle | contact).
+  // See assembly below.
   const rPr = `<w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="555555"/></w:rPr>`;
 
   // Inline drawing for the logo — used in the center column of line 1.
@@ -116,21 +111,26 @@ function buildCleanHeaderXml(imageRid) {
     </wp:inline>
   </w:drawing></w:r>` : '';
 
-  // Line 1: Aquamarina 10  →[tab]→ logo  →[tab]→ Tel.
-  const line1 = `<w:p>${tabStops}<w:r>${rPr}<w:t xml:space="preserve">Aquamarina 10</w:t></w:r><w:r>${rPr}<w:tab/></w:r>${drawing}<w:r>${rPr}<w:tab/><w:t xml:space="preserve">Tel. 787-407-4814</w:t></w:r></w:p>`;
-  // Line 2: Urb. Villa Blanca  →[tab]→  →[tab]→ Fax.
-  const line2 = `<w:p>${tabStops}<w:r>${rPr}<w:t xml:space="preserve">Urb. Villa Blanca</w:t></w:r><w:r>${rPr}<w:tab/></w:r><w:r>${rPr}<w:tab/><w:t xml:space="preserve">Fax. 787-258-8225</w:t></w:r></w:p>`;
-  // Line 3: Caguas PR 00725  →[tab]→  →[tab]→ email
-  const line3 = `<w:p>${tabStops}<w:r>${rPr}<w:t xml:space="preserve">Caguas PR 00725</w:t></w:r><w:r>${rPr}<w:tab/></w:r><w:r>${rPr}<w:tab/><w:t xml:space="preserve">clinicarehabilitacion10@gmail.com</w:t></w:r></w:p>`;
-  // Line 4 (optional): centered subtitle below the logo
-  const subtitle = `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="16"/><w:szCs w:val="16"/><w:color w:val="888888"/></w:rPr><w:t>Neuro-Cognitive Rehabilitation Clinic</w:t></w:r></w:p>`;
+  // Cells: address (left), contact (right-aligned), logo + subtitle (centered).
+  const para = (text, align) => `<w:p><w:pPr>${align ? `<w:jc w:val="${align}"/>` : ''}<w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr><w:r>${rPr}<w:t xml:space="preserve">${text}</w:t></w:r></w:p>`;
+  const addrCell = para('Aquamarina 10') + para('Urb. Villa Blanca') + para('Caguas PR 00725');
+  const contactCell = para('Tel. 787-407-4814', 'right') + para('Fax. 787-258-8225', 'right') + para('clinicarehabilitacion10@gmail.com', 'right');
+  const subtitle = `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="40" w:after="0" w:line="240" w:lineRule="auto"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="16"/><w:szCs w:val="16"/><w:color w:val="888888"/></w:rPr><w:t>Neuro-Cognitive Rehabilitation Clinic</w:t></w:r></w:p>`;
+  const logoCell = `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr>${drawing}</w:p>${subtitle}`;
+
+  const noBorders = `<w:tblBorders><w:top w:val="none" w:sz="0" w:space="0"/><w:left w:val="none" w:sz="0" w:space="0"/><w:bottom w:val="none" w:sz="0" w:space="0"/><w:right w:val="none" w:sz="0" w:space="0"/><w:insideH w:val="none" w:sz="0" w:space="0"/><w:insideV w:val="none" w:sz="0" w:space="0"/></w:tblBorders>`;
+  const noCellBorders = `<w:tcBorders><w:top w:val="none" w:sz="0" w:space="0"/><w:left w:val="none" w:sz="0" w:space="0"/><w:bottom w:val="none" w:sz="0" w:space="0"/><w:right w:val="none" w:sz="0" w:space="0"/></w:tcBorders>`;
+  // vAlign=top is the key fix: address/contact stay at the TOP of the row
+  // instead of vertically centering against the tall logo.
+  const cell = (w, content) => `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${noCellBorders}<w:vAlign w:val="top"/></w:tcPr>${content}</w:tc>`;
+
+  // Side columns equal (3150) so the 4500-twip logo column is centered on the
+  // 10800-twip (7.5") content width; the logo is centered within that column.
+  const tbl = `<w:tbl><w:tblPr><w:tblW w:w="10800" w:type="dxa"/><w:tblLayout w:type="fixed"/>${noBorders}<w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="0" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:right w:w="0" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid><w:gridCol w:w="3150"/><w:gridCol w:w="4500"/><w:gridCol w:w="3150"/></w:tblGrid><w:tr>${cell(3150, addrCell)}${cell(4500, logoCell)}${cell(3150, contactCell)}</w:tr></w:tbl>`;
 
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:hdr xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">
-${line1}
-${line2}
-${line3}
-${subtitle}
+${tbl}
 </w:hdr>`;
 }
 
