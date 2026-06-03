@@ -5,7 +5,11 @@ WORKDIR /app/client
 COPY client/package*.json ./
 RUN npm ci
 COPY client/ ./
-# Uses client/.env.production (VITE_API_URL=/api) — same-origin behind Traefik
+# Same-origin behind the reverse proxy. Set explicitly here because
+# client/.env.production is gitignored and won't be present in all build
+# contexts (e.g. a `git archive` snapshot), which would otherwise make the
+# bundle fall back to http://localhost:3000/api.
+ENV VITE_API_URL=/api
 RUN npm run build
 
 # Stage 2: runtime (Node + Chromium for Puppeteer PDF generation)
