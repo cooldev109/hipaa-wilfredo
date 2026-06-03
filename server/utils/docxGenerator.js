@@ -86,11 +86,17 @@ function buildCleanHeaderXml(imageRid) {
   // See assembly below.
   const rPr = `<w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="18"/><w:szCs w:val="18"/><w:color w:val="555555"/></w:rPr>`;
 
-  // Inline drawing for the logo — used in the center column of line 1.
-  const drawing = imageRid ? `<w:r><w:rPr><w:noProof/></w:rPr><w:drawing>
-    <wp:inline distT="0" distB="0" distL="0" distR="0" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing">
+  // Floating logo: centered horizontally on the page, anchored at the top of
+  // the first line so it does NOT push the address/contact text down, and there
+  // is no table (hence no Word gridlines).
+  const logo = imageRid ? `<w:r><w:rPr><w:noProof/></w:rPr><w:drawing>
+    <wp:anchor xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" distT="0" distB="0" distL="0" distR="0" simplePos="0" relativeHeight="251658240" behindDoc="0" locked="0" layoutInCell="1" allowOverlap="1">
+      <wp:simplePos x="0" y="0"/>
+      <wp:positionH relativeFrom="margin"><wp:align>center</wp:align></wp:positionH>
+      <wp:positionV relativeFrom="paragraph"><wp:posOffset>0</wp:posOffset></wp:positionV>
       <wp:extent cx="${LOGO_WIDTH_EMU}" cy="${LOGO_HEIGHT_EMU}"/>
       <wp:effectExtent l="0" t="0" r="0" b="0"/>
+      <wp:wrapNone/>
       <wp:docPr id="1" name="Neuronita logo"/>
       <wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr>
       <a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
@@ -108,29 +114,27 @@ function buildCleanHeaderXml(imageRid) {
           </pic:pic>
         </a:graphicData>
       </a:graphic>
-    </wp:inline>
+    </wp:anchor>
   </w:drawing></w:r>` : '';
 
-  // Cells: address (left), contact (right-aligned), logo + subtitle (centered).
-  const para = (text, align) => `<w:p><w:pPr>${align ? `<w:jc w:val="${align}"/>` : ''}<w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr><w:r>${rPr}<w:t xml:space="preserve">${text}</w:t></w:r></w:p>`;
-  const addrCell = para('Aquamarina 10') + para('Urb. Villa Blanca') + para('Caguas PR 00725');
-  const contactCell = para('Tel. 787-407-4814', 'right') + para('Fax. 787-258-8225', 'right') + para('clinicarehabilitacion10@gmail.com', 'right');
-  const subtitle = `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="40" w:after="0" w:line="240" w:lineRule="auto"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="16"/><w:szCs w:val="16"/><w:color w:val="888888"/></w:rPr><w:t>Neuro-Cognitive Rehabilitation Clinic</w:t></w:r></w:p>`;
-  const logoCell = `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr>${drawing}</w:p>${subtitle}`;
+  // Address (left) + contact (right) on three lines, using a right tab stop so
+  // the contact column is flush-right. The floating logo is placed in line 1
+  // but does not affect line height.
+  const rtab = `<w:pPr><w:tabs><w:tab w:val="right" w:pos="10800"/></w:tabs><w:spacing w:after="0" w:line="240" w:lineRule="auto"/></w:pPr>`;
+  const row = (left, right, withLogo) => `<w:p>${rtab}${withLogo ? logo : ''}<w:r>${rPr}<w:t xml:space="preserve">${left}</w:t></w:r><w:r>${rPr}<w:tab/><w:t xml:space="preserve">${right}</w:t></w:r></w:p>`;
+  const line1 = row('Aquamarina 10', 'Tel. 787-407-4814', true);
+  const line2 = row('Urb. Villa Blanca', 'Fax. 787-258-8225', false);
+  const line3 = row('Caguas PR 00725', 'clinicarehabilitacion10@gmail.com', false);
 
-  const noBorders = `<w:tblBorders><w:top w:val="none" w:sz="0" w:space="0"/><w:left w:val="none" w:sz="0" w:space="0"/><w:bottom w:val="none" w:sz="0" w:space="0"/><w:right w:val="none" w:sz="0" w:space="0"/><w:insideH w:val="none" w:sz="0" w:space="0"/><w:insideV w:val="none" w:sz="0" w:space="0"/></w:tblBorders>`;
-  const noCellBorders = `<w:tcBorders><w:top w:val="none" w:sz="0" w:space="0"/><w:left w:val="none" w:sz="0" w:space="0"/><w:bottom w:val="none" w:sz="0" w:space="0"/><w:right w:val="none" w:sz="0" w:space="0"/></w:tcBorders>`;
-  // vAlign=top is the key fix: address/contact stay at the TOP of the row
-  // instead of vertically centering against the tall logo.
-  const cell = (w, content) => `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/>${noCellBorders}<w:vAlign w:val="top"/></w:tcPr>${content}</w:tc>`;
-
-  // Side columns equal (3150) so the 4500-twip logo column is centered on the
-  // 10800-twip (7.5") content width; the logo is centered within that column.
-  const tbl = `<w:tbl><w:tblPr><w:tblW w:w="10800" w:type="dxa"/><w:tblLayout w:type="fixed"/>${noBorders}<w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="0" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:right w:w="0" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid><w:gridCol w:w="3150"/><w:gridCol w:w="4500"/><w:gridCol w:w="3150"/></w:tblGrid><w:tr>${cell(3150, addrCell)}${cell(4500, logoCell)}${cell(3150, contactCell)}</w:tr></w:tbl>`;
+  // Subtitle centered and offset down so it clears the floating logo.
+  const subtitle = `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="2300" w:after="0" w:line="240" w:lineRule="auto"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="16"/><w:szCs w:val="16"/><w:color w:val="888888"/></w:rPr><w:t>Neuro-Cognitive Rehabilitation Clinic</w:t></w:r></w:p>`;
 
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:hdr xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">
-${tbl}
+${line1}
+${line2}
+${line3}
+${subtitle}
 </w:hdr>`;
 }
 
