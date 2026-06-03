@@ -1,0 +1,12 @@
+# Keep the build context small and free of host artifacts / secrets
+.git
+**/node_modules
+client/dist
+server/storage
+**/*.tmp.*
+cookies.txt
+infra/vps/.env
+*.log
+docs
+failed docs
+~$*

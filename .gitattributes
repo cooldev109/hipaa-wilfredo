@@ -1,0 +1,5 @@
+# Ensure Linux-bound files keep LF line endings even when committed from Windows.
+# CRLF in entrypoint.sh would make the container fail with "no such file" on CMD.
+*.sh text eol=lf
+Dockerfile text eol=lf
+infra/vps/entrypoint.sh text eol=lf

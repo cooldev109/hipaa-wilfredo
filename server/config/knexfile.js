@@ -28,7 +28,8 @@ module.exports = {
       database: process.env.DATABASE_NAME,
       user: process.env.DATABASE_USER,
       password: process.env.DATABASE_PASSWORD,
-      ssl: { rejectUnauthorized: false }
+      // Local/container Postgres has no TLS. Enable only for managed DBs.
+      ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false
     },
     migrations: {
       directory: path.join(__dirname, '..', '..', 'database', 'migrations')

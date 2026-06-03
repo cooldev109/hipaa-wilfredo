@@ -10,6 +10,11 @@ const logger = require('./utils/logger');
 
 const app = express();
 
+// Behind a reverse proxy (Traefik/Caddy/nginx): trust the first hop so
+// req.ip reflects the real client (X-Forwarded-For) in audit logs and
+// req.protocol/secure are accurate.
+app.set('trust proxy', 1);
+
 // Security headers (relaxed CSP for production serving React)
 app.use(helmet({
   contentSecurityPolicy: env.nodeEnv === 'production' ? false : undefined

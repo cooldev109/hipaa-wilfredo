@@ -1,0 +1,72 @@
+# Neuronita EVF — runs alongside the existing Traefik stack on this VPS.
+# It only creates its OWN containers/volumes and joins the existing Traefik
+# network (n8n_default) so Traefik can route solodevs.net to it. Nothing in
+# the other projects (n8n / veinticuatro / saas) is touched.
+#
+# Usage:
+#   cp .env.example .env   # then fill secrets (or let deploy-vps.sh generate them)
+#   docker compose up -d --build
+name: neuronita-evf
+
+services:
+  evf-postgres:
+    image: postgres:16-alpine
+    container_name: neuronita-evf-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    volumes:
+      - evf-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - evfnet
+
+  evf-api:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: neuronita-evf:latest
+    container_name: neuronita-evf-api
+    restart: unless-stopped
+    depends_on:
+      evf-postgres:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      # Connect to the bundled Postgres (overrides anything in .env)
+      DATABASE_HOST: evf-postgres
+      DATABASE_PORT: "5432"
+      NODE_ENV: production
+      PORT: "3000"
+      STORAGE_PATH: /app/server/storage/reports
+    volumes:
+      - evf-storage:/app/server/storage
+    networks:
+      - evfnet
+      - proxy
+    labels:
+      - traefik.enable=true
+      # Container is on two networks; tell Traefik which one to reach it on.
+      - traefik.docker.network=n8n_default
+      - traefik.http.routers.neuronita.rule=Host(`solodevs.net`)
+      - traefik.http.routers.neuronita.entrypoints=web,websecure
+      - traefik.http.routers.neuronita.tls=true
+      - traefik.http.routers.neuronita.tls.certresolver=mytlschallenge
+      - traefik.http.services.neuronita.loadbalancer.server.port=3000
+
+networks:
+  evfnet:
+    driver: bridge
+  proxy:
+    external: true
+    name: n8n_default
+
+volumes:
+  evf-postgres-data:
+  evf-storage:
