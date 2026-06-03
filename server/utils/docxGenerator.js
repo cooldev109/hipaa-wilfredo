@@ -126,8 +126,8 @@ function buildCleanHeaderXml(imageRid) {
   const line2 = row('Urb. Villa Blanca', 'Fax. 787-258-8225', false);
   const line3 = row('Caguas PR 00725', 'clinicarehabilitacion10@gmail.com', false);
 
-  // Subtitle centered and offset down so it clears the floating logo.
-  const subtitle = `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="2300" w:after="0" w:line="240" w:lineRule="auto"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="16"/><w:szCs w:val="16"/><w:color w:val="888888"/></w:rPr><w:t>Neuro-Cognitive Rehabilitation Clinic</w:t></w:r></w:p>`;
+  // Clinic title — centered, bold, larger, sitting just below the floating logo.
+  const subtitle = `<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="1700" w:after="0" w:line="240" w:lineRule="auto"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:b/><w:sz w:val="24"/><w:szCs w:val="24"/><w:color w:val="555555"/></w:rPr><w:t>Neuro-Cognitive Rehabilitation Clinic</w:t></w:r></w:p>`;
 
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <w:hdr xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">
