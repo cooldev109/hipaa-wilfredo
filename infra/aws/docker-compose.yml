@@ -1,11 +1,6 @@
-# Neuronita EVF — standalone AWS EC2 deployment.
-# Runs the app + its own Postgres + Caddy (automatic HTTPS) on one instance.
-# Caddy obtains/renews a Let's Encrypt cert for DOMAIN automatically once the
-# domain's DNS points at this server's public IP.
-#
-# Usage:
-#   cp .env.example .env   # or let deploy-aws.sh generate it
-#   docker compose up -d --build
+# Neuronita EVF — standalone AWS EC2 deployment (nginx + Certbot).
+# App + its own Postgres + nginx reverse proxy + Certbot for auto-renewing TLS.
+# Initial certificate issuance is bootstrapped by switch-to-nginx.sh.
 name: neuronita-evf
 
 services:
@@ -49,23 +44,33 @@ services:
     networks:
       - evfnet
 
-  caddy:
-    image: caddy:2-alpine
-    container_name: neuronita-evf-caddy
+  nginx:
+    image: nginx:alpine
+    container_name: neuronita-evf-nginx
     restart: unless-stopped
     depends_on:
       - evf-api
     ports:
       - "80:80"
       - "443:443"
-    environment:
-      DOMAIN: ${DOMAIN}
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - certbot-www:/var/www/certbot:ro
+      - certbot-conf:/etc/letsencrypt:ro
+    # Reload every 6h so renewed certificates are picked up without downtime.
+    command: /bin/sh -c "while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g 'daemon off;'"
     networks:
       - evfnet
+
+  certbot:
+    image: certbot/certbot
+    container_name: neuronita-evf-certbot
+    restart: unless-stopped
+    volumes:
+      - certbot-www:/var/www/certbot
+      - certbot-conf:/etc/letsencrypt
+    # Attempt renewal twice a day (no-op until a cert exists).
+    entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h & wait $${!}; done"
 
 networks:
   evfnet:
@@ -74,5 +79,5 @@ networks:
 volumes:
   evf-postgres-data:
   evf-storage:
-  caddy-data:
-  caddy-config:
+  certbot-www:
+  certbot-conf:
