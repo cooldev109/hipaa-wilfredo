@@ -1,0 +1,7 @@
+# Caddy reverse proxy with automatic HTTPS (Let's Encrypt).
+# {$DOMAIN} is supplied via the DOMAIN env var from .env. Caddy will obtain a
+# certificate automatically once the domain resolves to this server's IP.
+{$DOMAIN}, www.{$DOMAIN} {
+	encode gzip
+	reverse_proxy evf-api:3000
+}
